@@ -165,20 +165,37 @@ const VictimScreen = ({ navigation, route }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              stopAdvertising();
-              await deactivateBeacon();
+              console.log('DEBUG VictimScreen: Cancelling SOS...');
               
+              // Stop animations first
               stopAnimations();
+              
+              // Clear timer
               if (timerRef.current) {
                 clearInterval(timerRef.current);
+                timerRef.current = null;
               }
               
+              // Update UI state immediately
               setIsActive(false);
               setTimeActive(0);
               
+              // Stop BLE advertising (await it!)
+              console.log('DEBUG VictimScreen: Stopping BLE advertising...');
+              await stopAdvertising();
+              
+              // Deactivate beacon in app context
+              console.log('DEBUG VictimScreen: Deactivating beacon in context...');
+              await deactivateBeacon();
+              
+              console.log('DEBUG VictimScreen: SOS cancelled successfully');
               Vibration.vibrate(100);
             } catch (error) {
               console.error('Deactivate SOS error:', error);
+              // Still update UI even if there's an error
+              setIsActive(false);
+              setTimeActive(0);
+              Alert.alert('Warning', 'SOS cancelled but there may have been an error stopping the beacon.');
             }
           },
         },
@@ -252,16 +269,24 @@ const VictimScreen = ({ navigation, route }) => {
           <View style={styles.mainContent}>
             <TouchableOpacity
               style={[styles.sosButton, isActive && styles.sosButtonActive]}
-              onPress={isActive ? handleDeactivateSOS : handleActivateSOS}
-              activeOpacity={0.8}
+              onPress={() => {
+                console.log('DEBUG VictimScreen: SOS button pressed, isActive:', isActive);
+                if (isActive) {
+                  handleDeactivateSOS();
+                } else {
+                  handleActivateSOS();
+                }
+              }}
+              activeOpacity={0.7}
             >
               <Animated.View
                 style={[
                   styles.sosButtonOuter,
                   isActive && { transform: [{ scale: pulseAnim }] },
                 ]}
+                pointerEvents="none"
               >
-                <View style={styles.sosButtonInner}>
+                <View style={styles.sosButtonInner} pointerEvents="none">
                   <Icon
                     name={isActive ? 'close' : 'alert-circle'}
                     size={80}

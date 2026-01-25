@@ -15,6 +15,10 @@ import HomeScreen from './screens/HomeScreen';
 import VictimScreen from './screens/VictimScreen';
 import RescuerScreen from './screens/RescuerScreen';
 import HeatMapScreen from './screens/HeatMapScreen';
+import ManualMapScreen from './screens/ManualMapScreen';
+import LiveMapScreen from './screens/LiveMapScreen';
+import CombinedMapScreen from './screens/CombinedMapScreen';
+import RadarMapScreen from './screens/RadarMapScreen';
 import ARViewScreen from './screens/ARViewScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import GroupScreen from './screens/GroupScreen';
@@ -125,6 +129,26 @@ const App = () => {
                 name="Professional" 
                 component={ProfessionalModeScreen}
                 options={{ title: 'Professional Mode' }}
+              />
+              <Stack.Screen 
+                name="ManualMap" 
+                component={ManualMapScreen}
+                options={{ title: 'Manual Map' }}
+              />
+              <Stack.Screen 
+                name="LiveMap" 
+                component={LiveMapScreen}
+                options={{ title: 'Live Map' }}
+              />
+              <Stack.Screen 
+                name="CombinedMap" 
+                component={CombinedMapScreen}
+                options={{ title: 'Combined Map' }}
+              />
+              <Stack.Screen 
+                name="RadarMap" 
+                component={RadarMapScreen}
+                options={{ title: 'Radar Map' }}
               />
             </Stack.Navigator>
           </NavigationContainer>

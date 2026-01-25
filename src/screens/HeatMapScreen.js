@@ -1,6 +1,7 @@
 /**
  * FLARE HeatMap Screen
  * 2D visualization of signal strength and obstacles
+ * Enhanced with hot/cold navigation and obstacle detection
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -12,18 +13,19 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  Vibration,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { useBluetooth } from '../context/BluetoothContext';
 import HeatMapService from '../services/HeatMapService';
 import NavigationService from '../services/NavigationService';
-import HeatMapCanvas from '../components/HeatMapCanvas';
 import SignalStrength from '../components/SignalStrength';
 import { COLORS, HEAT_MAP_CONFIG } from '../utils/constants';
 import { formatDistance, getNavigationGuidance } from '../utils/rssiCalculator';
 
 const { width, height } = Dimensions.get('window');
+const GRID_CELL_SIZE = Math.floor((width - 40) / 7); // 7x7 grid
 
 const HeatMapScreen = ({ navigation, route }) => {
   const { settings } = useApp();
@@ -35,9 +37,12 @@ const HeatMapScreen = ({ navigation, route }) => {
   const [navigationData, setNavigationData] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [suggestedPath, setSuggestedPath] = useState(null);
+  const [enhancedNavState, setEnhancedNavState] = useState(null);
+  const [lastGuidanceMessage, setLastGuidanceMessage] = useState('');
   
   const positionRef = useRef({ x: 0, y: 0 });
   const updateIntervalRef = useRef(null);
+  const lastRssiRef = useRef(null);
 
   useEffect(() => {
     HeatMapService.initialize(HEAT_MAP_CONFIG.GRID_SIZE);
@@ -103,7 +108,35 @@ const HeatMapScreen = ({ navigation, route }) => {
     positionRef.current = { x: newX, y: newY };
     setCurrentPosition({ x: newX, y: newY });
     HeatMapService.updateRescuerPosition(newX, newY);
-  }, []);
+
+    // Get current beacon RSSI for enhanced navigation
+    if (selectedBeacon) {
+      const beacon = detectedBeacons.find(b => b.deviceId === selectedBeacon.deviceId);
+      if (beacon) {
+        // Record movement with signal reading for hot/cold navigation
+        const guidance = NavigationService.recordMovement(
+          { dx: Math.sign(dx), dy: Math.sign(dy) },
+          { x: newX, y: newY },
+          beacon.rssi
+        );
+        
+        if (guidance) {
+          // Update enhanced navigation state
+          const fullState = NavigationService.getFullNavigationState();
+          setEnhancedNavState(fullState);
+          
+          // Vibrate on state changes
+          if (guidance.hotColdState === 'getting_warmer' && lastGuidanceMessage !== guidance.message) {
+            Vibration.vibrate(100); // Short vibrate for warmer
+          } else if (guidance.hotColdState === 'getting_colder' && lastGuidanceMessage !== guidance.message) {
+            Vibration.vibrate([0, 50, 50, 50]); // Double vibrate for colder
+          }
+          
+          setLastGuidanceMessage(guidance.message);
+        }
+      }
+    }
+  }, [selectedBeacon, detectedBeacons, lastGuidanceMessage]);
 
   const handleToggleRecording = () => {
     if (!selectedBeacon) {
@@ -245,57 +278,222 @@ const HeatMapScreen = ({ navigation, route }) => {
   };
 
   const renderNavigationInfo = () => {
-    if (!navigationData || !selectedBeacon) return null;
+    if (!selectedBeacon) return null;
 
-    const guidance = NavigationService.suggestDirection();
+    const navState = enhancedNavState || NavigationService.getFullNavigationState();
+    const guidance = navState?.guidance;
+
+    // Get hot/cold background color
+    const getHotColdColor = () => {
+      if (!guidance) return COLORS.surface;
+      switch (guidance.hotColdState) {
+        case 'getting_warmer': return 'rgba(255, 87, 34, 0.3)'; // Orange/warm
+        case 'getting_colder': return 'rgba(33, 150, 243, 0.3)'; // Blue/cold
+        case 'stable': return 'rgba(255, 193, 7, 0.2)'; // Yellow
+        default: return COLORS.surface;
+      }
+    };
 
     return (
-      <View style={styles.navInfo}>
+      <View style={[styles.navInfo, { backgroundColor: getHotColdColor() }]}>
         <View style={styles.navDistance}>
-          <Text style={styles.navDistanceValue}>{navigationData.formattedDistance}</Text>
+          <Text style={styles.navDistanceValue}>
+            {guidance?.distance || '--'}
+          </Text>
           <Text style={styles.navDistanceLabel}>to victim</Text>
         </View>
-        <SignalStrength rssi={navigationData.rssi} size="small" />
+        
+        {navState?.rssi && (
+          <SignalStrength rssi={navState.rssi} size="small" />
+        )}
+        
         <View style={styles.navGuidance}>
           <Icon
-            name={guidance.icon}
+            name={guidance?.icon || 'compass'}
             size={24}
-            color={guidance.confidence > 0.5 ? COLORS.secondary : COLORS.warning}
+            color={guidance?.confidence > 0.5 ? COLORS.secondary : COLORS.warning}
           />
-          <Text style={styles.navGuidanceText} numberOfLines={2}>
-            {guidance.suggestion}
+          <Text style={styles.navGuidanceText} numberOfLines={3}>
+            {guidance?.message || 'Move around to calibrate...'}
           </Text>
         </View>
       </View>
     );
   };
 
+  // Render the enhanced direction grid
+  const renderDirectionGrid = () => {
+    const navState = enhancedNavState || NavigationService.getFullNavigationState();
+    const grid = navState?.grid || [];
+
+    if (grid.length === 0) {
+      // Generate empty 7x7 grid
+      const emptyGrid = [];
+      for (let y = 0; y < 7; y++) {
+        const row = [];
+        for (let x = 0; x < 7; x++) {
+          row.push({
+            x: x - 3,
+            y: y - 3,
+            status: 'unknown',
+            isRescuer: x === 3 && y === 3,
+          });
+        }
+        emptyGrid.push(row);
+      }
+      return renderGrid(emptyGrid);
+    }
+
+    return renderGrid(grid);
+  };
+
+  const renderGrid = (grid) => {
+    const getCellStyle = (cell) => {
+      let backgroundColor = COLORS.heatMapUnknown;
+      let borderColor = COLORS.border;
+      
+      if (cell.isRescuer) {
+        backgroundColor = COLORS.info;
+        borderColor = COLORS.info;
+      } else if (cell.isEstimatedVictim) {
+        backgroundColor = COLORS.primary;
+        borderColor = COLORS.primary;
+      } else if (cell.isObstacle || cell.status === 'obstacle') {
+        backgroundColor = COLORS.heatMapObstacle;
+        borderColor = COLORS.danger;
+      } else if (cell.isBestPath || cell.status === 'clear') {
+        backgroundColor = COLORS.heatMapClear;
+        borderColor = COLORS.secondary;
+      } else if (cell.status === 'unstable' || cell.status === 'weak') {
+        backgroundColor = COLORS.heatMapUnstable;
+      }
+      
+      return {
+        width: GRID_CELL_SIZE,
+        height: GRID_CELL_SIZE,
+        backgroundColor,
+        borderWidth: cell.isBestPath ? 2 : 1,
+        borderColor,
+        justifyContent: 'center',
+        alignItems: 'center',
+      };
+    };
+
+    const getCellIcon = (cell) => {
+      if (cell.isRescuer) {
+        return <Icon name="account" size={GRID_CELL_SIZE * 0.5} color={COLORS.text} />;
+      }
+      if (cell.isEstimatedVictim) {
+        return <Icon name="map-marker-alert" size={GRID_CELL_SIZE * 0.5} color={COLORS.text} />;
+      }
+      if (cell.isObstacle || cell.status === 'obstacle') {
+        return <Icon name="close-thick" size={GRID_CELL_SIZE * 0.4} color={COLORS.text} />;
+      }
+      if (cell.isBestPath) {
+        return <Icon name="arrow-up-bold" size={GRID_CELL_SIZE * 0.4} color={COLORS.text} />;
+      }
+      return null;
+    };
+
+    return (
+      <View style={styles.gridContainer}>
+        {grid.map((row, rowIndex) => (
+          <View key={rowIndex} style={styles.gridRow}>
+            {row.map((cell, colIndex) => (
+              <View key={`${rowIndex}-${colIndex}`} style={getCellStyle(cell)}>
+                {getCellIcon(cell)}
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderMapSelector = () => (
+    <View style={styles.mapSelector}>
+      <Text style={styles.mapSelectorTitle}>Choose Navigation Mode:</Text>
+      
+      {/* Featured: Radar Map */}
+      <TouchableOpacity 
+        style={styles.featuredMapButton}
+        onPress={() => navigation.navigate('RadarMap')}
+      >
+        <Icon name="radar" size={40} color={COLORS.text} />
+        <View style={styles.featuredMapInfo}>
+          <Text style={styles.featuredMapTitle}>🎯 Radar Map (Recommended)</Text>
+          <Text style={styles.featuredMapDesc}>
+            Real-time scrolling • Rotation tracking • Visual movement feedback
+          </Text>
+        </View>
+      </TouchableOpacity>
+      
+      <Text style={styles.otherMapsLabel}>Other Options:</Text>
+      <View style={styles.mapButtons}>
+        <TouchableOpacity 
+          style={styles.mapButton}
+          onPress={() => navigation.navigate('ManualMap')}
+        >
+          <Icon name="gesture-tap" size={28} color={COLORS.text} />
+          <Text style={styles.mapButtonTitle}>📍 Manual</Text>
+          <Text style={styles.mapButtonDesc}>Arrow buttons</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.mapButton}
+          onPress={() => navigation.navigate('LiveMap')}
+        >
+          <Icon name="walk" size={28} color={COLORS.text} />
+          <Text style={styles.mapButtonTitle}>🚶 Live</Text>
+          <Text style={styles.mapButtonDesc}>Auto-tracking</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.mapButton}
+          onPress={() => navigation.navigate('CombinedMap')}
+        >
+          <Icon name="swap-horizontal" size={28} color={COLORS.text} />
+          <Text style={styles.mapButtonTitle}>🗺️ Combined</Text>
+          <Text style={styles.mapButtonDesc}>Both modes</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🗺️ Heat Map Navigator</Text>
-        {selectedBeacon && (
+        <Text style={styles.title}>🗺️ Navigation Maps</Text>
+        {selectedBeacon ? (
           <Text style={styles.subtitle}>
             Tracking: {selectedBeacon.deviceName}
+          </Text>
+        ) : (
+          <Text style={styles.subtitleWarning}>
+            ⚠️ Select a beacon from Radar tab first
           </Text>
         )}
       </View>
 
-      {renderLegend()}
-      {renderNavigationInfo()}
+      {renderMapSelector()}
 
-      <View style={styles.mapContainer}>
-        <HeatMapCanvas
-          gridData={gridData}
-          currentPosition={currentPosition}
-          victimPosition={selectedBeacon ? { x: 20, y: 20 } : null}
-          suggestedPath={suggestedPath}
-          cellSize={30}
-        />
+      <View style={styles.infoSection}>
+        <Text style={styles.infoTitle}>How to Use:</Text>
+        <View style={styles.infoItem}>
+          <Icon name="numeric-1-circle" size={20} color={COLORS.primary} />
+          <Text style={styles.infoText}>Go to Radar tab and select a victim beacon</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Icon name="numeric-2-circle" size={20} color={COLORS.primary} />
+          <Text style={styles.infoText}>Choose a navigation mode above</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Icon name="numeric-3-circle" size={20} color={COLORS.primary} />
+          <Text style={styles.infoText}>Follow the hot/cold guidance to find victim</Text>
+        </View>
       </View>
 
-      {renderStats()}
-      {renderControls()}
+      {renderLegend()}
     </SafeAreaView>
   );
 };
@@ -319,11 +517,18 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 5,
   },
+  subtitleWarning: {
+    fontSize: 14,
+    color: COLORS.warning,
+    marginTop: 5,
+  },
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 15,
+    flexWrap: 'wrap',
+    gap: 10,
     paddingVertical: 10,
+    paddingHorizontal: 15,
     backgroundColor: COLORS.surface,
   },
   legendItem: {
@@ -337,14 +542,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendText: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textSecondary,
   },
   navInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 15,
+    padding: 12,
     backgroundColor: COLORS.surface,
     marginHorizontal: 10,
     marginVertical: 5,
@@ -352,14 +557,15 @@ const styles = StyleSheet.create({
   },
   navDistance: {
     alignItems: 'center',
+    minWidth: 70,
   },
   navDistanceValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   navDistanceLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textSecondary,
   },
   navGuidance: {
@@ -367,12 +573,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 10,
   },
   navGuidanceText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.text,
+    lineHeight: 18,
   },
   mapContainer: {
     flex: 1,
@@ -380,6 +587,119 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridContainer: {
+    padding: 10,
+  },
+  gridRow: {
+    flexDirection: 'row',
+  },
+  calibrationStatus: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  calibrationText: {
+    fontSize: 12,
+    color: COLORS.text,
+  },
+  calibrationHint: {
+    fontSize: 11,
+    color: COLORS.warning,
+    marginTop: 2,
+  },
+  mapSelector: {
+    padding: 15,
+  },
+  mapSelectorTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  featuredMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    gap: 12,
+  },
+  featuredMapInfo: {
+    flex: 1,
+  },
+  featuredMapTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.text,
+  },
+  featuredMapDesc: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+  otherMapsLabel: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  mapButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  mapButton: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  mapButtonTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginTop: 6,
+  },
+  mapButtonDesc: {
+    fontSize: 9,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  infoSection: {
+    backgroundColor: COLORS.surface,
+    margin: 15,
+    padding: 15,
+    borderRadius: 12,
+  },
+  infoTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 12,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  infoText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    flex: 1,
   },
   statsPanel: {
     flexDirection: 'row',
