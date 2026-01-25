@@ -18,21 +18,53 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.flare.rescue"
+      "bundleIdentifier": "com.flare.rescue",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "FLARE needs Bluetooth to broadcast and detect emergency SOS beacons",
+        "NSBluetoothPeripheralUsageDescription": "FLARE needs Bluetooth to broadcast emergency SOS signals",
+        "UIBackgroundModes": [
+          "bluetooth-central",
+          "bluetooth-peripheral"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1A1A2E"
       },
-      "package": "com.flare.rescue"
+      "package": "com.flare.rescue",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_ADVERTISE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-location",
-      "expo-asset"
-    ]
+      "expo-asset",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["central"],
+          "bluetoothAlwaysPermission": "FLARE needs Bluetooth to detect emergency SOS beacons"
+        }
+      ],
+      "expo-font",
+      "./plugins/withBlePeripheral"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7402ae1e-d9ac-47e7-9280-c3a3488c8711"
+      }
+    }
   }
 }

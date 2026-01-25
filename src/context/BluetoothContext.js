@@ -1,50 +1,21 @@
 /**
  * FLARE Bluetooth Context
  * Manages Bluetooth LE scanning and advertising for beacon communication
+ * Uses real BLE via react-native-ble-plx for Development Build
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
-import { Platform, PermissionsAndroid, Alert } from 'react-native';
+import { Platform, PermissionsAndroid, Alert, NativeModules, NativeEventEmitter } from 'react-native';
+import { BleManager } from 'react-native-ble-plx';
+import BLEPeripheral from 'react-native-ble-peripheral';
 import { BLUETOOTH_CONFIG, BEACON_STATUS } from '../utils/constants';
 import { calculateDistanceFromRSSI, smoothRSSI } from '../utils/rssiCalculator';
 
-// Use mock service for Expo Go compatibility
-// Note: react-native-ble-plx requires native modules not available in Expo Go
-// Using mock implementation for Expo Go compatibility
-const BleManager = class MockBleManager {
-  constructor() {
-    console.log('DEBUG: Using Mock BleManager for Expo Go compatibility');
-  }
-  onStateChange(callback, immediate = false) {
-    console.log('DEBUG: Mock onStateChange called');
-    if (immediate && callback) callback('PoweredOn');
-    return { remove: () => {} };
-  }
-  startDeviceScan(serviceUUIDs, options, callback) {
-    console.log('DEBUG: Mock: Starting device scan');
-    // Simulate finding a mock beacon after 3 seconds
-    setTimeout(() => {
-      if (callback) {
-        const mockDevice = {
-          id: 'mock-beacon-123',
-          name: 'FLARE-SOS-PUBLIC-95',
-          rssi: -65,
-          serviceUUIDs: ['0000180f-0000-1000-8000-00805f9b34fb'],
-          manufacturerData: null,
-        };
-        callback(null, mockDevice);
-      }
-    }, 3000);
-  }
-  stopDeviceScan() {
-    console.log('DEBUG: Mock: Stopping device scan');
-  }
-  destroy() {
-    console.log('DEBUG: Mock: BleManager destroyed');
-  }
-};
+// FLARE Beacon Service UUID - used for both advertising and scanning
+const FLARE_SERVICE_UUID = 'F1A2E3B4-C5D6-7890-ABCD-EF1234567890';
+const FLARE_CHARACTERISTIC_UUID = 'F1A2E3B4-C5D6-7890-ABCD-EF1234567891';
 
-console.log('DEBUG: Mock BleManager ready for Expo Go');
+console.log('DEBUG: BluetoothContext using BLE Central (scanning) + Peripheral (advertising)');
 
 const BluetoothContext = createContext();
 
@@ -144,6 +115,7 @@ export const BluetoothProvider = ({ children }) => {
   const bleManagerRef = useRef(null);
   const scanIntervalRef = useRef(null);
   const rssiHistoryRef = useRef({});
+  const advertisingDataRef = useRef(null);
 
   useEffect(() => {
     initializeBluetooth();
@@ -154,11 +126,10 @@ export const BluetoothProvider = ({ children }) => {
 
   const initializeBluetooth = async () => {
     try {
-      console.log('DEBUG: Initializing Bluetooth...');
-      console.log('DEBUG: BleManager before instantiation:', BleManager);
+      console.log('DEBUG: Initializing real BleManager...');
       
       bleManagerRef.current = new BleManager();
-      console.log('DEBUG: BleManager instance created:', bleManagerRef.current);
+      console.log('DEBUG: BleManager instance created');
       
       const hasPermissions = await requestPermissions();
       console.log('DEBUG: Permissions result:', hasPermissions);
@@ -173,7 +144,7 @@ export const BluetoothProvider = ({ children }) => {
         return;
       }
       
-      console.log('DEBUG: Setting up state change listener...');
+      // Listen for Bluetooth state changes
       const subscription = bleManagerRef.current.onStateChange((state) => {
         console.log('DEBUG: Bluetooth state changed to:', state);
         const isEnabled = state === 'PoweredOn';
@@ -184,7 +155,6 @@ export const BluetoothProvider = ({ children }) => {
       return () => subscription.remove();
     } catch (error) {
       console.error('DEBUG: Bluetooth initialization error:', error);
-      console.error('DEBUG: Error stack:', error.stack);
       dispatch({
         type: actionTypes.SET_ERROR,
         payload: 'Failed to initialize Bluetooth',
@@ -233,21 +203,23 @@ export const BluetoothProvider = ({ children }) => {
     }
     
     try {
+      console.log('DEBUG: Starting real BLE scan...');
       dispatch({ type: actionTypes.SET_SCANNING, payload: true });
       dispatch({ type: actionTypes.SET_ERROR, payload: null });
       
-      // Use mock implementation for Expo Go
+      // Real BLE scanning
       bleManagerRef.current.startDeviceScan(
-        null,
+        null, // Scan for all devices (filter by name later)
         { allowDuplicates: true },
         (error, device) => {
           if (error) {
-            console.error('Scan error:', error);
+            console.error('BLE Scan error:', error);
             dispatch({ type: actionTypes.SET_ERROR, payload: error.message });
             return;
           }
           
           if (device && isFlareBeacon(device)) {
+            console.log('DEBUG: Found FLARE beacon:', device.name, 'RSSI:', device.rssi);
             processBeaconDevice(device, mode, groupId);
           }
         }
@@ -282,14 +254,31 @@ export const BluetoothProvider = ({ children }) => {
   };
 
   const isFlareBeacon = (device) => {
+    // Check for FLARE beacon by name
     if (device.name && device.name.startsWith('FLARE-SOS')) {
       return true;
     }
     
+    // Check for iBeacon with our UUID in manufacturer data
     if (device.manufacturerData) {
-      const data = device.manufacturerData;
-      if (data && data.includes('FLARE')) {
-        return true;
+      try {
+        // iBeacon manufacturer data contains the UUID
+        const data = device.manufacturerData;
+        // Check if it contains our FLARE UUID pattern
+        if (data && data.toLowerCase().includes('f1a2e3b4')) {
+          return true;
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+    
+    // Check service UUIDs
+    if (device.serviceUUIDs) {
+      for (const uuid of device.serviceUUIDs) {
+        if (uuid.toLowerCase().includes('f1a2e3b4')) {
+          return true;
+        }
       }
     }
     
@@ -390,9 +379,45 @@ export const BluetoothProvider = ({ children }) => {
 
   const startAdvertising = async (beaconData) => {
     try {
+      console.log('DEBUG: Starting real BLE beacon advertisement:', beaconData);
+      
+      // First, ensure we're not already advertising
+      if (state.isAdvertising) {
+        console.log('DEBUG: Already advertising, stopping first...');
+        await stopAdvertising();
+        // Add a small delay to ensure cleanup
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      // Create a minimal beacon name to stay under 31 bytes
+      // Format: FS-{MODE}-{BATTERY}
+      const modeCode = beaconData.mode === 'private' ? 'P' : 'U';
+      const battery = Math.min(99, beaconData.batteryLevel || 100); // Max 2 digits
+      const beaconName = `FS-${modeCode}-${battery}`; // Only 7 chars total
+      
+      console.log('DEBUG: Minimal beacon name:', beaconName);
+      
+      // Add GATT service (but don't add characteristic to reduce data size)
+      await BLEPeripheral.addService(FLARE_SERVICE_UUID, true);
+      
+      // Set the device name for advertising - very short
+      await BLEPeripheral.setName(beaconName);
+      
+      // Start advertising
+      await BLEPeripheral.start();
+      
+      console.log('DEBUG: BLE Peripheral advertising started!');
+      console.log('DEBUG: Broadcasting as:', beaconName);
+      
       dispatch({ type: actionTypes.SET_ADVERTISING, payload: true });
       
-      console.log('Starting beacon advertisement:', beaconData);
+      // Store beacon data locally
+      advertisingDataRef.current = {
+        ...beaconData,
+        beaconName,
+        startTime: Date.now(),
+        uuid: FLARE_SERVICE_UUID,
+      };
       
       return true;
     } catch (error) {
@@ -402,11 +427,33 @@ export const BluetoothProvider = ({ children }) => {
     }
   };
 
-  const stopAdvertising = () => {
+  const stopAdvertising = async () => {
     try {
+      console.log('DEBUG: Stopping BLE beacon advertisement');
+      
+      // Stop BLE peripheral advertising
+      try {
+        await BLEPeripheral.stop();
+      } catch (e) {
+        // Might not be advertising, ignore
+        console.log('DEBUG: BLE stop error (ignoring):', e.message);
+      }
+      
+      // Remove the service
+      try {
+        await BLEPeripheral.removeService(FLARE_SERVICE_UUID);
+      } catch (e) {
+        // Service might not exist, ignore
+        console.log('DEBUG: Service removal error (ignoring):', e.message);
+      }
+      
+      advertisingDataRef.current = null;
       dispatch({ type: actionTypes.SET_ADVERTISING, payload: false });
+      
+      console.log('DEBUG: BLE advertising stopped');
     } catch (error) {
       console.error('Stop advertising error:', error);
+      dispatch({ type: actionTypes.SET_ADVERTISING, payload: false });
     }
   };
 
