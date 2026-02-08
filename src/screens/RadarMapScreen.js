@@ -22,7 +22,8 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { Accelerometer, Magnetometer } from 'expo-sensors';
 import { useApp } from '../context/AppContext';
 import { useBluetooth } from '../context/BluetoothContext';
-import { COLORS } from '../utils/constants';
+import { COLORS, RSSI_CONFIG, BLUETOOTH_CONFIG } from '../utils/constants';
+import { trilateratePosition } from '../utils/rssiCalculator';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,15 +38,13 @@ const CIRCLE_MARGIN = 1;
 // Movement detection - faster response
 const STEP_THRESHOLD = 1.1;
 const STEP_COOLDOWN = 250;
-const STEP_DISTANCE_CM = 65; // Average step length in cm
+// STEP_DISTANCE_CM moved below to use from context/settings
 
 // Sensor update intervals - faster for less delay
 const ACCEL_UPDATE_INTERVAL = 50;
 const MAG_UPDATE_INTERVAL = 60;
 
-// Distance estimation constants
-const TX_POWER = -59;
-const ENVIRONMENT_FACTOR = 2.5;
+// Distance estimation constants - moved below to use from context/settings
 
 // Calibration constants - rotation-based, not time-based
 const MIN_DIRECTIONS_REQUIRED = 6; // Must sample at least 6 of 8 compass directions
@@ -54,7 +53,12 @@ const ALL_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 const RadarMapScreen = ({ navigation, route }) => {
   const { settings } = useApp();
   const { selectedBeacon, detectedBeacons } = useBluetooth();
-  
+
+  // Load settings with defaults
+  const txPower = RSSI_CONFIG.TX_POWER;
+  const environmentFactor = settings?.environmentFactor || RSSI_CONFIG.ENVIRONMENT_FACTORS.INDOOR_LIGHT;
+  const stepDistanceCm = settings?.stepLength || 65; // Default 65cm if not set
+
   // Calibration state
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [showCalibrationPrompt, setShowCalibrationPrompt] = useState(true);
@@ -63,25 +67,25 @@ const RadarMapScreen = ({ navigation, route }) => {
   const [calibratedDirection, setCalibratedDirection] = useState(null);
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [directionsVisited, setDirectionsVisited] = useState(new Set());
-  
+
   // Position state - rescuer is always at center, world moves around them
   const [worldOffset, setWorldOffset] = useState({ x: 0, y: 0 });
   const [heading, setHeading] = useState(0);
   const [isTracking, setIsTracking] = useState(false);
   const [stepCount, setStepCount] = useState(0);
   const [lastStepTime, setLastStepTime] = useState(0);
-  
+
   // Victim tracking
   const [victimDirection, setVictimDirection] = useState(null);
   const [victimAngle, setVictimAngle] = useState(0); // Precise angle in degrees
   const [victimDistance, setVictimDistance] = useState(null);
   const [victimOnMap, setVictimOnMap] = useState(false);
   const [victimMapPosition, setVictimMapPosition] = useState(null);
-  
+
   // Signal tracking
   const [rssiHistory, setRssiHistory] = useState([]);
   const [directionConfidence, setDirectionConfidence] = useState(0);
-  
+
   // Refs
   const accelerometerSub = useRef(null);
   const magnetometerSub = useRef(null);
@@ -90,6 +94,7 @@ const RadarMapScreen = ({ navigation, route }) => {
   const movementDirectionRef = useRef({ dx: 0, dy: -1 });
   const calibrationStartTime = useRef(null);
   const calibrationInterval = useRef(null);
+  const rssiSamplesRef = useRef(new Map()); // Store RSSI samples for trilateration: beaconId -> [{x, y, rssi, timestamp}, ...]
   
   // Animation for smooth scrolling effect
   const scrollAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -114,8 +119,8 @@ const RadarMapScreen = ({ navigation, route }) => {
     // Test 2: Distance calculation
     console.log('TEST 2: Distance Calculation');
     const testRssi = -59;
-    const testDist = Math.pow(10, (TX_POWER - testRssi) / (10 * ENVIRONMENT_FACTOR));
-    console.log(`  RSSI ${testRssi} → ${(testDist * 100).toFixed(0)}cm`);
+    const testDist = Math.pow(10, (txPower - testRssi) / (10 * environmentFactor));
+    console.log(`  RSSI ${testRssi} → ${(testDist * 100).toFixed(0)}cm (txPower: ${txPower}, envFactor: ${environmentFactor})`);
     const distTest = testDist > 0.9 && testDist < 1.1; // Should be ~1m
     console.log(`  RESULT: ${distTest ? '✓ PASS' : '✗ FAIL'}`);
     
@@ -373,14 +378,45 @@ const RadarMapScreen = ({ navigation, route }) => {
   const handleStep = () => {
     // Move the world in opposite direction of movement (creates scrolling effect)
     const { dx, dy } = movementDirectionRef.current;
-    
-    // Each step moves STEP_DISTANCE_CM (65cm)
+
+    // Each step moves stepDistanceCm (from settings, default 65cm)
     const newOffset = {
-      x: worldOffset.x - dx * STEP_DISTANCE_CM,
-      y: worldOffset.y - dy * STEP_DISTANCE_CM,
+      x: worldOffset.x - dx * stepDistanceCm,
+      y: worldOffset.y - dy * stepDistanceCm,
     };
-    
+
     setWorldOffset(newOffset);
+
+    // Collect RSSI samples at current position for trilateration
+    if (selectedBeacon) {
+      const beacon = detectedBeacons.find(b => b.deviceId === selectedBeacon.deviceId);
+      if (beacon) {
+        // Convert world offset back to grid position relative to center
+        const gridX = Math.round(-newOffset.x / CM_PER_CIRCLE);
+        const gridY = Math.round(-newOffset.y / CM_PER_CIRCLE);
+
+        // Store sample: {x, y, rssi, timestamp}
+        const beaconId = selectedBeacon.deviceId;
+        if (!rssiSamplesRef.current.has(beaconId)) {
+          rssiSamplesRef.current.set(beaconId, []);
+        }
+
+        const samples = rssiSamplesRef.current.get(beaconId);
+        samples.push({
+          x: gridX,
+          y: gridY,
+          rssi: beacon.rssi,
+          timestamp: Date.now(),
+        });
+
+        // Keep only last 20 samples
+        if (samples.length > 20) {
+          samples.shift();
+        }
+
+        console.log('DEBUG RadarMap: Collected RSSI sample -', { beaconId, gridX, gridY, rssi: beacon.rssi, totalSamples: samples.length });
+      }
+    }
 
     // Animate the scroll effect - faster animation
     Animated.sequence([
@@ -403,31 +439,92 @@ const RadarMapScreen = ({ navigation, route }) => {
   // ============ BEACON SIGNAL PROCESSING ============
 
   const processBeaconSignal = (rssi) => {
-    // Calculate distance from RSSI
-    const distanceM = Math.pow(10, (TX_POWER - rssi) / (10 * ENVIRONMENT_FACTOR));
+    // Calculate weighted RSSI - apply exponential decay for recent readings
+    const now = Date.now();
+    let weightedRssi = rssi;
+
+    // If we have history, weight recent readings more heavily
+    if (rssiHistory.length > 0) {
+      const recent = rssiHistory.slice(-5); // Last 5 readings
+      let totalWeight = 0;
+      let weightedSum = 0;
+
+      // Weight current reading highest
+      const currentWeight = 1.0;
+      weightedSum += rssi * currentWeight;
+      totalWeight += currentWeight;
+
+      // Weight previous readings with exponential decay
+      recent.forEach(reading => {
+        const ageSeconds = (now - reading.timestamp) / 1000;
+        const weight = Math.exp(-ageSeconds / 10); // e^(-age/10) - 10 second half-life
+        weightedSum += reading.rssi * weight;
+        totalWeight += weight;
+      });
+
+      weightedRssi = weightedSum / totalWeight;
+    }
+
+    // Calculate distance from weighted RSSI
+    const distanceM = Math.pow(10, (txPower - weightedRssi) / (10 * environmentFactor));
     const distanceCm = Math.round(distanceM * 100);
-    
+
     setVictimDistance(distanceCm);
-    
+
     // Track RSSI history for direction estimation (if not calibrated)
     if (!isCalibrated) {
       setRssiHistory(prev => {
-        const newHistory = [...prev, { rssi, heading, timestamp: Date.now() }];
+        const newHistory = [...prev, { rssi, heading, timestamp: now }];
         return newHistory.slice(-20);
       });
       estimateVictimDirection(rssi);
     }
-    
+
     // Check if victim is within visible map area (10m diameter = 5m radius = 500cm)
     if (distanceCm <= VISIBLE_RADIUS_CM) {
       setVictimOnMap(true);
-      // Calculate position on map based on calibrated or estimated direction
-      const angle = isCalibrated ? victimAngle : getEstimatedVictimAngle();
-      const normalizedDist = distanceCm / VISIBLE_RADIUS_CM;
-      const victimPos = {
-        x: Math.round(GRID_SIZE / 2 + normalizedDist * (GRID_SIZE / 2) * Math.sin(angle * Math.PI / 180)),
-        y: Math.round(GRID_SIZE / 2 - normalizedDist * (GRID_SIZE / 2) * Math.cos(angle * Math.PI / 180)),
-      };
+
+      // Try to use trilateration if we have enough samples
+      let victimPos = null;
+      const beaconId = selectedBeacon?.deviceId;
+
+      if (beaconId && rssiSamplesRef.current.has(beaconId)) {
+        const samples = rssiSamplesRef.current.get(beaconId);
+        if (samples.length >= 3) {
+          // Use trilateration with collected samples
+          // Convert grid positions to distance estimates
+          const beaconDistances = samples.map(sample => {
+            const dist = Math.pow(10, (txPower - sample.rssi) / (10 * environmentFactor)) * 100;
+            return {
+              x: sample.x * CM_PER_CIRCLE,
+              y: sample.y * CM_PER_CIRCLE,
+              distance: dist,
+            };
+          });
+
+          const trilateratedPos = trilateratePosition(beaconDistances);
+          if (trilateratedPos) {
+            // Convert from cm to grid cells
+            victimPos = {
+              x: Math.round(GRID_SIZE / 2 + trilateratedPos.x / CM_PER_CIRCLE),
+              y: Math.round(GRID_SIZE / 2 + trilateratedPos.y / CM_PER_CIRCLE),
+            };
+            console.log('DEBUG RadarMap: Trilaterated victim position:', victimPos, 'from', samples.length, 'samples');
+          }
+        }
+      }
+
+      // Fall back to single-point RSSI distance if trilateration unavailable
+      if (!victimPos) {
+        const angle = isCalibrated ? victimAngle : getEstimatedVictimAngle();
+        const normalizedDist = distanceCm / VISIBLE_RADIUS_CM;
+        victimPos = {
+          x: Math.round(GRID_SIZE / 2 + normalizedDist * (GRID_SIZE / 2) * Math.sin(angle * Math.PI / 180)),
+          y: Math.round(GRID_SIZE / 2 - normalizedDist * (GRID_SIZE / 2) * Math.cos(angle * Math.PI / 180)),
+        };
+        console.log('DEBUG RadarMap: Using RSSI-based position (insufficient samples for trilateration):', victimPos);
+      }
+
       console.log('DEBUG RadarMap: Victim ON MAP:', victimPos, 'dist:', distanceCm, 'cm');
       setVictimMapPosition(victimPos);
     } else {
@@ -435,7 +532,7 @@ const RadarMapScreen = ({ navigation, route }) => {
       setVictimOnMap(false);
       setVictimMapPosition(null);
     }
-    
+
     previousRssi.current = rssi;
   };
 

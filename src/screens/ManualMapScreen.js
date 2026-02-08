@@ -20,7 +20,7 @@ import { useApp } from '../context/AppContext';
 import { useBluetooth } from '../context/BluetoothContext';
 import NavigationService from '../services/NavigationService';
 import SignalStrength from '../components/SignalStrength';
-import { COLORS } from '../utils/constants';
+import { COLORS, RSSI_CONFIG } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
 const GRID_CELL_SIZE = Math.floor((width - 40) / 7);

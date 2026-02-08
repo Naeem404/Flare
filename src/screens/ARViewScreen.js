@@ -34,6 +34,12 @@ const ALTITUDE_THRESHOLD_METERS = 2; // Minimum altitude difference to show abov
 const MARKER_SIZE_MIN = 40;
 const MARKER_SIZE_MAX = 100;
 
+// Bearing estimation constants
+const BEARING_ESTIMATE_INTERVAL = 500; // Update bearing estimate every 500ms to smooth jitter
+const BEARING_SAMPLE_HISTORY = 100; // Keep last 100 samples per beacon
+const BEARING_SECTOR_SIZE = 30; // 30-degree sectors (12 total around 360°)
+const BEARING_CALIBRATION_THRESHOLD = 8; // Need 8+ sectors sampled to consider calibrated
+
 const ARViewScreen = ({ navigation }) => {
   const { selectedBeacon, detectedBeacons, isScanning } = useBluetooth();
   const [permission, requestPermission] = useCameraPermissions();
@@ -47,6 +53,9 @@ const ARViewScreen = ({ navigation }) => {
   // UI state
   const [markerAnimation] = useState(new Animated.Value(0));
   const [cameraReady, setCameraReady] = useState(false);
+  const [altitudeBannerVisible, setAltitudeBannerVisible] = useState(false);
+  const [altitudeBannerType, setAltitudeBannerType] = useState('above'); // 'above' or 'below'
+  const [bannerPulseAnim] = useState(new Animated.Value(0));
 
   // Refs for sensor subscriptions
   const accelerometerSub = useRef(null);
@@ -55,6 +64,11 @@ const ARViewScreen = ({ navigation }) => {
   const compassHistoryRef = useRef([]);
   const altitudeHistoryRef = useRef([]);
   const appStateRef = useRef(AppState.currentState);
+
+  // Bearing estimation refs
+  const bearingMapRef = useRef(new Map()); // Map<beaconId, { samples: [{heading, rssi}], estimatedBearing, calibrationSectors }>
+  const lastBearingUpdateRef = useRef({}); // Track last time we updated bearing estimate for each beacon
+  const bearingAnimationsRef = useRef(new Map()); // Map<beaconId, Animated.Value for smooth position updates>
 
   // Initialize camera permissions
   useEffect(() => {
@@ -105,6 +119,26 @@ const ARViewScreen = ({ navigation }) => {
       ])
     ).start();
   }, [markerAnimation]);
+
+  // Animate altitude banner pulse
+  useEffect(() => {
+    if (altitudeBannerVisible) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bannerPulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: false,
+          }),
+          Animated.timing(bannerPulseAnim, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: false,
+          }),
+        ])
+      ).start();
+    }
+  }, [altitudeBannerVisible, bannerPulseAnim]);
 
   const handleAppStateChange = (nextAppState) => {
     if (
@@ -192,7 +226,13 @@ const ARViewScreen = ({ navigation }) => {
     const smoothedHeading =
       compassHistoryRef.current.reduce((a, b) => a + b, 0) /
       compassHistoryRef.current.length;
-    setPhoneHeading(Math.round(smoothedHeading));
+    const roundedHeading = Math.round(smoothedHeading);
+    setPhoneHeading(roundedHeading);
+
+    // Record heading and RSSI pairs for bearing estimation
+    if (detectedBeacons.length > 0) {
+      recordBearingSamples(roundedHeading);
+    }
   };
 
   const handleBarometer = (data) => {
@@ -215,12 +255,119 @@ const ARViewScreen = ({ navigation }) => {
     return altitude;
   };
 
+  /**
+   * Record heading and RSSI pairs for bearing estimation
+   * Called every time magnetometer fires with beacon data available
+   */
+  const recordBearingSamples = (currentHeading) => {
+    detectedBeacons.forEach((beacon) => {
+      const beaconId = beacon.deviceId;
+
+      // Initialize beacon entry if needed
+      if (!bearingMapRef.current.has(beaconId)) {
+        bearingMapRef.current.set(beaconId, {
+          samples: [],
+          estimatedBearing: null,
+          calibrationSectors: new Set(),
+        });
+      }
+
+      const beaconData = bearingMapRef.current.get(beaconId);
+
+      // Add new sample
+      beaconData.samples.push({
+        heading: currentHeading,
+        rssi: beacon.rssi,
+        timestamp: Date.now(),
+      });
+
+      // Keep only last N samples
+      if (beaconData.samples.length > BEARING_SAMPLE_HISTORY) {
+        beaconData.samples.shift();
+      }
+
+      // Update which sectors have been sampled
+      const sector = Math.floor(currentHeading / BEARING_SECTOR_SIZE);
+      beaconData.calibrationSectors.add(sector);
+    });
+  };
+
+  /**
+   * Calculate bearing estimate from heading/RSSI samples
+   * Finds the heading range with strongest average RSSI
+   */
+  const calculateEstimatedBearing = (beaconId) => {
+    const beaconData = bearingMapRef.current.get(beaconId);
+    if (!beaconData || beaconData.samples.length < 5) {
+      return null; // Not enough data
+    }
+
+    // Divide into 30° sectors and calculate average RSSI per sector
+    const sectorData = {};
+    for (let i = 0; i < 12; i++) {
+      sectorData[i] = { rssiSum: 0, count: 0 };
+    }
+
+    beaconData.samples.forEach(({ heading, rssi }) => {
+      const sector = Math.floor(heading / BEARING_SECTOR_SIZE);
+      sectorData[sector].rssiSum += rssi;
+      sectorData[sector].count += 1;
+    });
+
+    // Find sector with highest average RSSI
+    let bestSector = 0;
+    let bestAvgRssi = -1000;
+
+    for (let i = 0; i < 12; i++) {
+      if (sectorData[i].count > 0) {
+        const avgRssi = sectorData[i].rssiSum / sectorData[i].count;
+        if (avgRssi > bestAvgRssi) {
+          bestAvgRssi = avgRssi;
+          bestSector = i;
+        }
+      }
+    }
+
+    // Return center of best sector (0-30 -> 15, 30-60 -> 45, etc.)
+    return bestSector * BEARING_SECTOR_SIZE + BEARING_SECTOR_SIZE / 2;
+  };
+
+  /**
+   * Get bearing for a beacon, using estimated value from samples
+   * Before calibration, returns null to show "?" icon
+   */
   const calculateBeaconBearing = (beacon) => {
-    // Estimate bearing from beacon
-    // In a real implementation, this would use angle-of-arrival or RSSI direction
-    // For now, we use the direction the phone was moving when signal was strongest
-    // or a placeholder based on beacon ID
-    return (beacon.deviceId.charCodeAt(0) * 37) % 360;
+    const beaconId = beacon.deviceId;
+
+    // Check if we need to update the bearing estimate
+    const now = Date.now();
+    const lastUpdate = lastBearingUpdateRef.current[beaconId] || 0;
+
+    if (now - lastUpdate > BEARING_ESTIMATE_INTERVAL) {
+      // Time to recalculate bearing estimate
+      const newBearing = calculateEstimatedBearing(beaconId);
+      if (newBearing !== null) {
+        const beaconData = bearingMapRef.current.get(beaconId);
+        beaconData.estimatedBearing = newBearing;
+      }
+      lastBearingUpdateRef.current[beaconId] = now;
+    }
+
+    // Return estimated bearing, or null if not yet calibrated
+    const beaconData = bearingMapRef.current.get(beaconId);
+    return beaconData?.estimatedBearing ?? null;
+  };
+
+  /**
+   * Get calibration progress for a beacon (0-12 sectors)
+   */
+  const getBeaconCalibrationProgress = (beaconId) => {
+    const beaconData = bearingMapRef.current.get(beaconId);
+    if (!beaconData) return { sampled: 0, total: 12, isCalibrated: false };
+
+    const sampled = beaconData.calibrationSectors.size;
+    const isCalibrated = sampled >= BEARING_CALIBRATION_THRESHOLD;
+    return { sampled, total: 12, isCalibrated };
   };
 
   const isBeaconOnScreen = (bearingDiff) => {
@@ -229,14 +376,31 @@ const ARViewScreen = ({ navigation }) => {
 
   const getMarkerPosition = (beacon) => {
     const beaconBearing = calculateBeaconBearing(beacon);
-    let bearingDiff = beaconBearing - phoneHeading;
+    const calibration = getBeaconCalibrationProgress(beacon.deviceId);
 
-    // Normalize to -180 to 180
-    while (bearingDiff > 180) bearingDiff -= 360;
-    while (bearingDiff < -180) bearingDiff += 360;
+    let bearingDiff = 0;
+    let onScreen = true;
+    let opacity = 0.7;
 
-    // Check if on screen
-    const onScreen = isBeaconOnScreen(bearingDiff);
+    // If not yet calibrated, show at default position with reduced opacity
+    if (!calibration.isCalibrated || beaconBearing === null) {
+      // Default: show to the right center, with "?" icon
+      bearingDiff = 30; // Offset to right
+      opacity = 0.4; // Lower opacity for uncalibrated
+    } else {
+      bearingDiff = beaconBearing - phoneHeading;
+
+      // Normalize to -180 to 180
+      while (bearingDiff > 180) bearingDiff -= 360;
+      while (bearingDiff < -180) bearingDiff += 360;
+
+      // Check if on screen
+      onScreen = isBeaconOnScreen(bearingDiff);
+
+      // Opacity based on signal strength (for calibrated beacons)
+      const signalQuality = getSignalQuality(beacon.rssi);
+      opacity = 0.7 + signalQuality.bars * 0.06;
+    }
 
     // Horizontal position based on bearing
     // Center = 0°, left = -FOV/2, right = +FOV/2
@@ -254,8 +418,16 @@ const ARViewScreen = ({ navigation }) => {
       const altDelta = currentAltitude - baselineAltitude;
       if (altDelta > ALTITUDE_THRESHOLD_METERS) {
         altitudeOffset = -80; // Show above
+        // Update altitude banner
+        setAltitudeBannerVisible(true);
+        setAltitudeBannerType('above');
       } else if (altDelta < -ALTITUDE_THRESHOLD_METERS) {
         altitudeOffset = 80; // Show below
+        // Update altitude banner
+        setAltitudeBannerVisible(true);
+        setAltitudeBannerType('below');
+      } else {
+        setAltitudeBannerVisible(false);
       }
     }
 
@@ -263,9 +435,7 @@ const ARViewScreen = ({ navigation }) => {
     const distanceFactor = Math.max(0.5, Math.min(1, 20 / beacon.distance));
     const markerSize = MARKER_SIZE_MIN + distanceFactor * (MARKER_SIZE_MAX - MARKER_SIZE_MIN);
 
-    // Opacity based on signal strength
     const signalQuality = getSignalQuality(beacon.rssi);
-    const opacity = 0.7 + signalQuality.bars * 0.06;
 
     return {
       screenX,
@@ -276,11 +446,13 @@ const ARViewScreen = ({ navigation }) => {
       bearingDiff,
       altitudeOffset,
       signalQuality,
+      isCalibrated: calibration.isCalibrated,
     };
   };
 
   const renderBeaconMarker = (beacon) => {
     const position = getMarkerPosition(beacon);
+    const calibration = getBeaconCalibrationProgress(beacon.deviceId);
 
     if (!position.onScreen) return null;
 
@@ -328,7 +500,7 @@ const ARViewScreen = ({ navigation }) => {
           ]}
         >
           <Icon
-            name="account-alert"
+            name={position.isCalibrated ? 'account-alert' : 'help-circle'}
             size={position.markerSize * 0.6}
             color={COLORS.text}
           />
@@ -339,6 +511,20 @@ const ARViewScreen = ({ navigation }) => {
           <Text style={styles.markerDistance} numberOfLines={1}>
             {formatDistance(beacon.distance)}
           </Text>
+
+          {/* Calibration progress indicator */}
+          {!position.isCalibrated && (
+            <View style={styles.calibrationIndicator}>
+              <Icon
+                name="rotate-3d"
+                size={10}
+                color={COLORS.primary}
+              />
+              <Text style={styles.calibrationText}>
+                {calibration.sampled}/{calibration.total}
+              </Text>
+            </View>
+          )}
 
           {/* Altitude indicator */}
           {position.altitudeOffset !== 0 && (
@@ -400,6 +586,39 @@ const ARViewScreen = ({ navigation }) => {
     );
   };
 
+  const renderAltitudeBanner = () => {
+    if (!altitudeBannerVisible) return null;
+
+    const bannerScale = bannerPulseAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 1.1],
+    });
+
+    const bannerOpacity = bannerPulseAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.9, 1],
+    });
+
+    const icon = altitudeBannerType === 'above' ? 'arrow-up' : 'arrow-down';
+    const label = altitudeBannerType === 'above' ? 'SIGNAL ABOVE' : 'SIGNAL BELOW';
+
+    return (
+      <Animated.View
+        style={[
+          styles.altitudeBanner,
+          {
+            transform: [{ scale: bannerScale }],
+            opacity: bannerOpacity,
+          },
+        ]}
+      >
+        <Icon name={icon} size={20} color={COLORS.text} />
+        <Text style={styles.altitudeBannerText}>{label}</Text>
+        <Icon name={icon} size={20} color={COLORS.text} />
+      </Animated.View>
+    );
+  };
+
   const renderCompassStrip = () => {
     const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     const angles = [0, 45, 90, 135, 180, 225, 270, 315];
@@ -449,6 +668,8 @@ const ARViewScreen = ({ navigation }) => {
 
     const signalQuality = getSignalQuality(selectedBeacon.rssi);
     const position = getMarkerPosition(selectedBeacon);
+    const calibration = getBeaconCalibrationProgress(selectedBeacon.deviceId);
+    const bearing = calculateBeaconBearing(selectedBeacon);
     const altStatus =
       position.altitudeOffset > 0
         ? 'Below'
@@ -479,6 +700,16 @@ const ARViewScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Calibration progress */}
+        {!calibration.isCalibrated && (
+          <View style={styles.calibrationProgressContainer}>
+            <Icon name="rotate-3d" size={14} color={COLORS.primary} />
+            <Text style={styles.calibrationProgressText}>
+              Rotate slowly to calibrate • {calibration.sampled}/{calibration.total} directions sampled
+            </Text>
+          </View>
+        )}
+
         <View style={styles.infoPanelStats}>
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Distance</Text>
@@ -487,7 +718,7 @@ const ARViewScreen = ({ navigation }) => {
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>Direction</Text>
             <Text style={styles.statValue}>
-              {Math.round(calculateBeaconBearing(selectedBeacon))}°
+              {bearing !== null ? `${Math.round(bearing)}°` : '?'}
             </Text>
           </View>
           <View style={styles.statItem}>
@@ -499,7 +730,9 @@ const ARViewScreen = ({ navigation }) => {
         <View style={styles.instruction}>
           <Icon name="information" size={14} color={COLORS.info} />
           <Text style={styles.instructionText}>
-            Rotate slowly to update direction. Markers indicate beacon position.
+            {calibration.isCalibrated
+              ? 'Rotate to refine accuracy. Markers show beacon position.'
+              : 'Rotate slowly to calibrate direction. Move around the beacon.'}
           </Text>
         </View>
       </View>
@@ -560,6 +793,9 @@ const ARViewScreen = ({ navigation }) => {
 
         {/* Overlay — positioned on top of camera but NOT a child of CameraView */}
         <View style={[StyleSheet.absoluteFill, { pointerEvents: 'box-none' }]}>
+          {/* Altitude banner */}
+          {renderAltitudeBanner()}
+
           {/* Compass strip at top */}
           {renderCompassStrip()}
 
@@ -700,6 +936,17 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: 'bold',
   },
+  calibrationIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 2,
+  },
+  calibrationText: {
+    fontSize: 9,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
   altitudeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -710,6 +957,25 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.primary,
     fontWeight: '600',
+  },
+  altitudeBanner: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.emergency,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  altitudeBannerText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   arrowContainer: {
     position: 'absolute',
@@ -777,6 +1043,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  calibrationProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 184, 0, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  calibrationProgressText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: '600',
   },
   infoPanelTitle: {
     fontSize: 11,
