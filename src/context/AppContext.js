@@ -26,6 +26,7 @@ const initialState = {
   
   settings: {
     environmentFactor: 2.5,
+    stepLength: 65,
     soundEnabled: true,
     vibrationEnabled: true,
     autoSync: true,

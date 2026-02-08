@@ -311,7 +311,7 @@ const HeatMapScreen = ({ navigation, route }) => {
           <Icon
             name={guidance?.icon || 'compass'}
             size={24}
-            color={guidance?.confidence > 0.5 ? COLORS.secondary : COLORS.warning}
+            color={guidance?.confidence > 0.5 ? COLORS.info : COLORS.warning}
           />
           <Text style={styles.navGuidanceText} numberOfLines={3}>
             {guidance?.message || 'Move around to calibrate...'}
@@ -363,7 +363,7 @@ const HeatMapScreen = ({ navigation, route }) => {
         borderColor = COLORS.danger;
       } else if (cell.isBestPath || cell.status === 'clear') {
         backgroundColor = COLORS.heatMapClear;
-        borderColor = COLORS.secondary;
+        borderColor = COLORS.info;
       } else if (cell.status === 'unstable' || cell.status === 'weak') {
         backgroundColor = COLORS.heatMapUnstable;
       }
@@ -504,37 +504,42 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    padding: 15,
+    padding: 16,
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 14,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 5,
+    marginTop: 6,
   },
   subtitleWarning: {
     fontSize: 14,
+    fontWeight: '500',
     color: COLORS.warning,
-    marginTop: 5,
+    marginTop: 6,
   },
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 10,
-    paddingVertical: 10,
+    gap: 12,
+    paddingVertical: 12,
     paddingHorizontal: 15,
     backgroundColor: COLORS.surface,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
   },
   legendColor: {
     width: 16,
@@ -543,42 +548,47 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   navInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 14,
     backgroundColor: COLORS.surface,
-    marginHorizontal: 10,
-    marginVertical: 5,
+    marginHorizontal: 12,
+    marginVertical: 8,
     borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   navDistance: {
     alignItems: 'center',
     minWidth: 70,
   },
   navDistanceValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     color: COLORS.primary,
   },
   navDistanceLabel: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   navGuidance: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   navGuidanceText: {
     flex: 1,
     fontSize: 13,
-    color: COLORS.text,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
     lineHeight: 18,
   },
   mapContainer: {
@@ -616,13 +626,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   mapSelector: {
-    padding: 15,
+    padding: 16,
   },
   mapSelectorTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 12,
+    color: COLORS.textPrimary,
+    marginBottom: 14,
     textAlign: 'center',
   },
   featuredMapButton: {
@@ -630,8 +640,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.primary,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    padding: 16,
+    marginBottom: 16,
     gap: 12,
   },
   featuredMapInfo: {
@@ -639,41 +649,44 @@ const styles = StyleSheet.create({
   },
   featuredMapTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   featuredMapDesc: {
     fontSize: 12,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     marginTop: 4,
   },
   otherMapsLabel: {
     fontSize: 13,
+    fontWeight: '500',
     color: COLORS.textSecondary,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   mapButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 10,
   },
   mapButton: {
     flex: 1,
     backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 12,
+    padding: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   mapButtonTitle: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginTop: 6,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginTop: 8,
   },
   mapButtonDesc: {
     fontSize: 9,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: 2,
@@ -681,46 +694,52 @@ const styles = StyleSheet.create({
   infoSection: {
     backgroundColor: COLORS.surface,
     margin: 15,
-    padding: 15,
+    padding: 16,
     borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   infoTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.primary,
     marginBottom: 12,
   },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     marginBottom: 10,
   },
   infoText: {
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     flex: 1,
   },
   statsPanel: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 15,
+    padding: 16,
     backgroundColor: COLORS.surface,
-    marginHorizontal: 10,
+    marginHorizontal: 12,
     borderRadius: 12,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.primary,
   },
   statItem: {
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   statLabel: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 4,
   },
   controls: {
     flexDirection: 'row',
@@ -736,13 +755,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   moveButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 2,
+    margin: 4,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   centerIndicator: {
     width: 44,
@@ -751,23 +772,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionButtons: {
-    gap: 10,
+    gap: 12,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 22,
     backgroundColor: COLORS.surface,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
     gap: 8,
   },
   actionButtonActive: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.emergency,
+    borderColor: COLORS.emergencyDark,
   },
   actionButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontWeight: '600',
+    fontSize: 14,
   },
 });
 

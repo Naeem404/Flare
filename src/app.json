@@ -20,6 +20,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.flare.rescue",
       "infoPlist": {
+        "NSCameraUsageDescription": "FLARE needs camera access to show AR beacon finder overlay",
         "NSBluetoothAlwaysUsageDescription": "FLARE needs Bluetooth to broadcast and detect emergency SOS beacons",
         "NSBluetoothPeripheralUsageDescription": "FLARE needs Bluetooth to broadcast emergency SOS signals",
         "UIBackgroundModes": [
@@ -35,13 +36,15 @@
       },
       "package": "com.flare.rescue",
       "permissions": [
+        "android.permission.CAMERA",
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_SCAN",
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.BLUETOOTH_ADVERTISE",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -50,11 +53,14 @@
     "plugins": [
       "expo-location",
       "expo-asset",
+      "expo-camera",
       [
         "react-native-ble-plx",
         {
           "isBackgroundEnabled": true,
-          "modes": ["central"],
+          "modes": [
+            "central"
+          ],
           "bluetoothAlwaysPermission": "FLARE needs Bluetooth to detect emergency SOS beacons"
         }
       ],
@@ -63,8 +69,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "7402ae1e-d9ac-47e7-9280-c3a3488c8711"
+        "projectId": "01577445-101f-4b25-8483-13bc7bea4e37"
       }
-    }
+    },
+    "owner": "s_abd_24"
   }
 }

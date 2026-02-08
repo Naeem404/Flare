@@ -200,15 +200,15 @@ const SettingsScreen = ({ navigation }) => {
             </Text>
             <View style={styles.features}>
               <View style={styles.featureItem}>
-                <Icon name="wifi-off" size={20} color={COLORS.secondary} />
+                <Icon name="wifi-off" size={20} color={COLORS.info} />
                 <Text style={styles.featureText}>No internet required</Text>
               </View>
               <View style={styles.featureItem}>
-                <Icon name="satellite-variant" size={20} color={COLORS.secondary} />
+                <Icon name="satellite-variant" size={20} color={COLORS.info} />
                 <Text style={styles.featureText}>No GPS needed</Text>
               </View>
               <View style={styles.featureItem}>
-                <Icon name="bluetooth" size={20} color={COLORS.secondary} />
+                <Icon name="bluetooth" size={20} color={COLORS.info} />
                 <Text style={styles.featureText}>Bluetooth P2P</Text>
               </View>
             </View>
@@ -236,25 +236,27 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.primary,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
+    letterSpacing: 1.5,
+    marginBottom: 12,
     marginLeft: 5,
   },
   sectionContent: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
     overflow: 'hidden',
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.surfaceLight,
   },
   settingIcon: {
     width: 40,
@@ -262,63 +264,71 @@ const styles = StyleSheet.create({
   },
   settingInfo: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   settingLabel: {
     fontSize: 16,
-    color: COLORS.text,
-    fontWeight: '500',
+    color: COLORS.textPrimary,
+    fontWeight: '600',
   },
   settingDescription: {
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 3,
   },
   sliderContainer: {
-    padding: 15,
-    paddingTop: 5,
+    padding: 16,
+    paddingTop: 8,
   },
   buttonGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   envButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
     backgroundColor: COLORS.backgroundLight,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   envButtonActive: {
     backgroundColor: COLORS.primary,
+    borderColor: COLORS.primaryLight,
   },
   envButtonText: {
     fontSize: 14,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   envButtonTextActive: {
-    color: COLORS.text,
-    fontWeight: '600',
+    color: COLORS.textPrimary,
+    fontWeight: '700',
   },
   sliderValue: {
     fontSize: 14,
     color: COLORS.primary,
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: COLORS.backgroundLight,
-    padding: 12,
+    padding: 14,
     margin: 15,
     marginTop: 0,
-    borderRadius: 8,
-    gap: 10,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    gap: 12,
   },
   infoText: {
     flex: 1,
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     lineHeight: 18,
   },
@@ -326,55 +336,59 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.surfaceLight,
   },
   infoLabel: {
     fontSize: 15,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   infoValue: {
     fontSize: 15,
-    color: COLORS.text,
-    fontWeight: '500',
+    color: COLORS.primary,
+    fontWeight: '700',
   },
   aboutSection: {
-    padding: 15,
+    padding: 16,
   },
   aboutText: {
     fontSize: 14,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     lineHeight: 22,
   },
   features: {
-    marginTop: 15,
-    gap: 10,
+    marginTop: 16,
+    gap: 12,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   featureText: {
     fontSize: 14,
-    color: COLORS.text,
+    fontWeight: '400',
+    color: COLORS.textPrimary,
   },
   resetButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
+    padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.danger,
+    borderWidth: 2,
+    borderColor: COLORS.emergency,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
     gap: 10,
-    marginTop: 10,
+    marginTop: 12,
   },
   resetButtonText: {
     fontSize: 16,
-    color: COLORS.danger,
-    fontWeight: '500',
+    color: COLORS.emergency,
+    fontWeight: '700',
   },
 });
 

@@ -20,7 +20,7 @@ import { useApp } from '../context/AppContext';
 import { useBluetooth } from '../context/BluetoothContext';
 import NavigationService from '../services/NavigationService';
 import SignalStrength from '../components/SignalStrength';
-import { COLORS } from '../utils/constants';
+import { COLORS, RSSI_CONFIG } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
 const GRID_CELL_SIZE = Math.floor((width - 40) / 7);
@@ -150,7 +150,7 @@ const ManualMapScreen = ({ navigation, route }) => {
           <Icon
             name={guidance?.icon || 'compass'}
             size={24}
-            color={guidance?.confidence > 0.5 ? COLORS.secondary : COLORS.warning}
+            color={guidance?.confidence > 0.5 ? COLORS.info : COLORS.warning}
           />
           <Text style={styles.navGuidanceText} numberOfLines={3}>
             {guidance?.message || 'Use arrows to simulate movement...'}
@@ -188,7 +188,7 @@ const ManualMapScreen = ({ navigation, route }) => {
         borderColor = COLORS.danger;
       } else if (cell.isBestPath || cell.status === 'clear') {
         backgroundColor = COLORS.heatMapClear;
-        borderColor = COLORS.secondary;
+        borderColor = COLORS.info;
       } else if (cell.status === 'unstable' || cell.status === 'weak') {
         backgroundColor = COLORS.heatMapUnstable;
       }
@@ -334,32 +334,39 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    padding: 15,
+    padding: 16,
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 3,
+    marginTop: 5,
   },
   navInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 14,
     backgroundColor: COLORS.surface,
-    marginHorizontal: 10,
-    marginVertical: 5,
+    marginHorizontal: 12,
+    marginVertical: 8,
     borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   warningText: {
     color: COLORS.warning,
     fontSize: 14,
+    fontWeight: '500',
     textAlign: 'center',
     flex: 1,
   },
@@ -368,30 +375,32 @@ const styles = StyleSheet.create({
     minWidth: 70,
   },
   navDistanceValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     color: COLORS.primary,
   },
   navDistanceLabel: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   navGuidance: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   navGuidanceText: {
     flex: 1,
     fontSize: 13,
-    color: COLORS.text,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
     lineHeight: 18,
   },
   mapContainer: {
     flex: 1,
-    margin: 10,
+    margin: 12,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: COLORS.surface,
@@ -406,28 +415,31 @@ const styles = StyleSheet.create({
   },
   calibrationStatus: {
     position: 'absolute',
-    bottom: 10,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 8,
+    bottom: 12,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    padding: 10,
     borderRadius: 8,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   calibrationText: {
     fontSize: 12,
-    color: COLORS.text,
+    fontWeight: '500',
+    color: COLORS.primary,
   },
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 10,
-    paddingVertical: 8,
+    gap: 12,
+    paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: COLORS.surface,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   legendColor: {
     width: 14,
@@ -436,13 +448,14 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   controls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
   },
   movementPad: {
     alignItems: 'center',
@@ -452,26 +465,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   moveButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 3,
+    margin: 4,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   centerIndicator: {
-    width: 50,
-    height: 50,
+    width: 54,
+    height: 54,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.primary,
-    borderRadius: 25,
+    borderRadius: 27,
   },
   moveCountText: {
-    color: COLORS.text,
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: COLORS.textPrimary,
+    fontWeight: '700',
+    fontSize: 18,
   },
   resetButton: {
     flexDirection: 'row',
@@ -480,10 +495,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     backgroundColor: COLORS.surface,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
     gap: 8,
   },
   resetButtonText: {
-    color: COLORS.text,
+    color: COLORS.primary,
     fontWeight: '600',
   },
 });

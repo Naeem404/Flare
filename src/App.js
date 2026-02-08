@@ -145,10 +145,15 @@ const App = () => {
                 component={CombinedMapScreen}
                 options={{ title: 'Combined Map' }}
               />
-              <Stack.Screen 
-                name="RadarMap" 
+              <Stack.Screen
+                name="RadarMap"
                 component={RadarMapScreen}
                 options={{ title: 'Radar Map' }}
+              />
+              <Stack.Screen
+                name="HeatMap"
+                component={HeatMapScreen}
+                options={{ title: 'Heat Map' }}
               />
             </Stack.Navigator>
           </NavigationContainer>
