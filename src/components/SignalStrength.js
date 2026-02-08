@@ -37,7 +37,7 @@ const SignalStrength = ({ rssi, size = 'medium', showLabel = true, showValue = f
                 width: config.barWidth,
                 height,
                 marginHorizontal: config.barGap / 2,
-                backgroundColor: index < activeBars ? quality.color : COLORS.border,
+                backgroundColor: index < activeBars ? quality.color : COLORS.surfaceLight,
               },
             ]}
           />
@@ -69,15 +69,16 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   label: {
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 4,
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 5,
     textTransform: 'capitalize',
   },
   value: {
     fontSize: 12,
+    fontWeight: '500',
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 3,
   },
 });
 

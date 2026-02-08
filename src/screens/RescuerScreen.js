@@ -129,7 +129,7 @@ const RescuerScreen = ({ navigation }) => {
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerTop}>
-        <Text style={styles.title}>🎯 FLARE Scanner</Text>
+        <Text style={styles.title}>FLARE Scanner</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.viewToggle}
@@ -138,7 +138,7 @@ const RescuerScreen = ({ navigation }) => {
             <Icon
               name={viewMode === 'list' ? 'radar' : 'format-list-bulleted'}
               size={24}
-              color={COLORS.text}
+              color={COLORS.primary}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -161,7 +161,7 @@ const RescuerScreen = ({ navigation }) => {
               <Icon
                 name={isScanning ? 'radar' : 'play'}
                 size={20}
-                color={COLORS.text}
+                color={COLORS.textPrimary}
               />
             </Animated.View>
             <Text style={styles.scanButtonText}>
@@ -222,7 +222,7 @@ const RescuerScreen = ({ navigation }) => {
                     guidance.direction === 'farther' ? 'arrow-down-bold' :
                     'minus'}
               size={32}
-              color={guidance.direction === 'closer' ? COLORS.secondary :
+              color={guidance.direction === 'closer' ? COLORS.success :
                      guidance.direction === 'farther' ? COLORS.danger :
                      COLORS.warning}
             />
@@ -244,7 +244,7 @@ const RescuerScreen = ({ navigation }) => {
       </Text>
       {!isScanning && (
         <TouchableOpacity style={styles.emptyButton} onPress={handleStartScan}>
-          <Icon name="magnify" size={20} color={COLORS.text} />
+          <Icon name="magnify" size={20} color={COLORS.textPrimary} />
           <Text style={styles.emptyButtonText}>Start Scanning</Text>
         </TouchableOpacity>
       )}
@@ -283,6 +283,7 @@ const RescuerScreen = ({ navigation }) => {
               onRefresh={handleRefresh}
               tintColor={COLORS.primary}
               colors={[COLORS.primary]}
+              progressBackgroundColor={COLORS.surface}
             />
           }
         />
@@ -297,10 +298,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    padding: 15,
+    padding: 16,
     backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
   },
   headerTop: {
     flexDirection: 'row',
@@ -310,8 +311,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   headerActions: {
     flexDirection: 'row',
@@ -319,26 +321,29 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   viewToggle: {
-    padding: 8,
+    padding: 10,
     borderRadius: 8,
     backgroundColor: COLORS.backgroundLight,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
   },
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 20,
     backgroundColor: COLORS.primary,
     gap: 8,
   },
   scanButtonActive: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.success,
   },
   scanButtonInner: {},
   scanButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontWeight: '600',
+    fontSize: 14,
   },
   statsRow: {
     flexDirection: 'row',
@@ -349,20 +354,21 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   statLabel: {
     fontSize: 12,
+    fontWeight: '500',
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 4,
   },
   navigationPanel: {
     backgroundColor: COLORS.surface,
-    margin: 10,
+    margin: 12,
     borderRadius: 12,
-    padding: 15,
-    borderWidth: 2,
+    padding: 16,
+    borderWidth: 3,
     borderColor: COLORS.primary,
   },
   navHeader: {
@@ -374,7 +380,7 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.primary,
   },
   navContent: {
     alignItems: 'center',
@@ -385,11 +391,12 @@ const styles = StyleSheet.create({
   },
   distanceValue: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: COLORS.primary,
   },
   distanceLabel: {
     fontSize: 14,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   guidanceBox: {
@@ -400,11 +407,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     gap: 10,
     width: '100%',
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   guidanceText: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.text,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
   },
   listContent: {
     padding: 10,
@@ -419,11 +429,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginTop: 20,
   },
   emptyText: {
     fontSize: 14,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: 10,
@@ -432,14 +443,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
     borderRadius: 25,
     marginTop: 20,
-    gap: 8,
+    gap: 10,
   },
   emptyButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontWeight: '600',
     fontSize: 16,
   },

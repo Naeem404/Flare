@@ -327,7 +327,7 @@ const GroupScreen = ({ navigation }) => {
       />
 
       <View style={styles.infoSection}>
-        <Icon name="shield-check" size={20} color={COLORS.secondary} />
+        <Icon name="shield-check" size={20} color={COLORS.info} />
         <Text style={styles.infoText}>
           Private groups are end-to-end encrypted. Only members can detect each other's beacons.
         </Text>
@@ -343,23 +343,27 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingBottom: 10,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 14,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 5,
+    marginTop: 6,
   },
   actionButtons: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    gap: 10,
-    marginBottom: 15,
+    gap: 12,
+    marginBottom: 16,
   },
   actionButton: {
     flex: 1,
@@ -367,8 +371,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 13,
+    borderRadius: 12,
     gap: 8,
   },
   actionButtonSecondary: {
@@ -377,9 +381,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   actionButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   listContent: {
     padding: 20,
@@ -389,52 +393,55 @@ const styles = StyleSheet.create({
   groupCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   groupIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.secondary,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   groupInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 14,
   },
   groupName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   groupCode: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-    gap: 5,
+    marginTop: 6,
+    gap: 6,
   },
   groupCodeLabel: {
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
   },
   groupCodeValue: {
     fontSize: 13,
     color: COLORS.primary,
-    fontWeight: '600',
-    letterSpacing: 1,
+    fontWeight: '700',
+    letterSpacing: 1.5,
   },
   shareButton: {
     padding: 10,
   },
   groupActions: {
     flexDirection: 'row',
-    marginTop: 15,
+    marginTop: 16,
     gap: 10,
   },
   groupAction: {
@@ -442,8 +449,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 11,
+    borderRadius: 10,
     gap: 8,
   },
   sosAction: {
@@ -453,23 +460,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.info,
   },
   groupActionText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   leaveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 15,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    gap: 5,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.surfaceLight,
+    gap: 6,
   },
   leaveButtonText: {
-    color: COLORS.danger,
+    color: COLORS.emergency,
     fontSize: 13,
+    fontWeight: '700',
   },
   emptyState: {
     flex: 1,
@@ -480,26 +488,30 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginTop: 20,
   },
   emptyText: {
     fontSize: 14,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 12,
     lineHeight: 22,
   },
   infoSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
     backgroundColor: COLORS.surface,
-    gap: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    gap: 12,
   },
   infoText: {
     flex: 1,
     fontSize: 12,
+    fontWeight: '400',
     color: COLORS.textSecondary,
   },
   modalOverlay: {

@@ -205,7 +205,7 @@ export const formatBatteryStatus = (level) => {
   } else {
     return {
       text: `✓ ${level}%`,
-      color: COLORS.secondary,
+      color: COLORS.success,
       icon: 'battery-high',
       priority: 'good',
     };

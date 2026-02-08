@@ -20,6 +20,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.flare.rescue",
       "infoPlist": {
+        "NSCameraUsageDescription": "FLARE needs camera access to show AR beacon finder overlay",
         "NSBluetoothAlwaysUsageDescription": "FLARE needs Bluetooth to broadcast and detect emergency SOS beacons",
         "NSBluetoothPeripheralUsageDescription": "FLARE needs Bluetooth to broadcast emergency SOS signals",
         "UIBackgroundModes": [
@@ -35,6 +36,7 @@
       },
       "package": "com.flare.rescue",
       "permissions": [
+        "android.permission.CAMERA",
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_SCAN",
@@ -50,6 +52,7 @@
     "plugins": [
       "expo-location",
       "expo-asset",
+      "expo-camera",
       [
         "react-native-ble-plx",
         {

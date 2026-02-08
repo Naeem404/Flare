@@ -39,6 +39,9 @@ const VictimScreen = ({ navigation, route }) => {
   
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const signalWave1Anim = useRef(new Animated.Value(0)).current;
+  const signalWave2Anim = useRef(new Animated.Value(0)).current;
+  const signalWave3Anim = useRef(new Animated.Value(0)).current;
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -89,13 +92,69 @@ const VictimScreen = ({ navigation, route }) => {
         useNativeDriver: true,
       })
     ).start();
+
+    // Signal wave animations - staggered pulsing
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(signalWave1Anim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(signalWave1Anim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(signalWave2Anim, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(signalWave2Anim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, 400);
+
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(signalWave3Anim, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(signalWave3Anim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, 800);
   };
 
   const stopAnimations = () => {
     pulseAnim.stopAnimation();
     rotateAnim.stopAnimation();
+    signalWave1Anim.stopAnimation();
+    signalWave2Anim.stopAnimation();
+    signalWave3Anim.stopAnimation();
     pulseAnim.setValue(1);
     rotateAnim.setValue(0);
+    signalWave1Anim.setValue(0);
+    signalWave2Anim.setValue(0);
+    signalWave3Anim.setValue(0);
   };
 
   const startTimer = () => {
@@ -227,8 +286,8 @@ const VictimScreen = ({ navigation, route }) => {
             >
               <Icon
                 name={type.icon}
-                size={24}
-                color={selectedEmergency === type.id ? COLORS.text : COLORS.textSecondary}
+                size={28}
+                color={selectedEmergency === type.id ? COLORS.textPrimary : COLORS.textSecondary}
               />
               <Text
                 style={[
@@ -255,7 +314,7 @@ const VictimScreen = ({ navigation, route }) => {
           {isActive && (
             <View style={styles.activeHeader}>
               <Animated.View style={{ transform: [{ rotate: spin }] }}>
-                <Icon name="broadcast" size={30} color={COLORS.primary} />
+                <Icon name="broadcast" size={30} color={COLORS.emergency} />
               </Animated.View>
               <View style={styles.activeInfo}>
                 <Text style={styles.activeTitle}>SOS BEACON ACTIVE</Text>
@@ -290,7 +349,7 @@ const VictimScreen = ({ navigation, route }) => {
                   <Icon
                     name={isActive ? 'close' : 'alert-circle'}
                     size={80}
-                    color={COLORS.text}
+                    color={COLORS.textPrimary}
                   />
                   <Text style={styles.sosButtonText}>
                     {isActive ? 'CANCEL SOS' : 'ACTIVATE SOS'}
@@ -301,16 +360,72 @@ const VictimScreen = ({ navigation, route }) => {
 
             {isActive && (
               <View style={styles.signalIndicator}>
-                <View style={styles.signalWave} />
-                <View style={[styles.signalWave, styles.signalWave2]} />
-                <View style={[styles.signalWave, styles.signalWave3]} />
+                <Animated.View
+                  style={[
+                    styles.signalWave,
+                    {
+                      transform: [
+                        {
+                          scale: signalWave1Anim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 1.4],
+                          }),
+                        },
+                      ],
+                      opacity: signalWave1Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.6, 0],
+                      }),
+                    },
+                  ]}
+                />
+                <Animated.View
+                  style={[
+                    styles.signalWave,
+                    styles.signalWave2,
+                    {
+                      transform: [
+                        {
+                          scale: signalWave2Anim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 1.4],
+                          }),
+                        },
+                      ],
+                      opacity: signalWave2Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.4, 0],
+                      }),
+                    },
+                  ]}
+                />
+                <Animated.View
+                  style={[
+                    styles.signalWave,
+                    styles.signalWave3,
+                    {
+                      transform: [
+                        {
+                          scale: signalWave3Anim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 1.4],
+                          }),
+                        },
+                      ],
+                      opacity: signalWave3Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.2, 0],
+                      }),
+                    },
+                  ]}
+                />
               </View>
             )}
           </View>
 
           <View style={styles.statusSection}>
             <View style={styles.statusItem}>
-              <Icon name="battery" size={24} color={batteryLevel > 20 ? COLORS.secondary : COLORS.danger} />
+              <Icon name="battery" size={24} color={batteryLevel > 20 ? COLORS.success : COLORS.danger} />
               <Text style={styles.statusLabel}>Battery</Text>
               <Text style={[styles.statusValue, batteryLevel <= 20 && { color: COLORS.danger }]}>
                 {batteryLevel}%
@@ -322,7 +437,7 @@ const VictimScreen = ({ navigation, route }) => {
               <Text style={styles.statusValue}>Bluetooth</Text>
             </View>
             <View style={styles.statusItem}>
-              <Icon name="signal" size={24} color={COLORS.secondary} />
+              <Icon name="signal" size={24} color={COLORS.success} />
               <Text style={styles.statusLabel}>Range</Text>
               <Text style={styles.statusValue}>~100m</Text>
             </View>
@@ -358,7 +473,7 @@ const VictimScreen = ({ navigation, route }) => {
               </Text>
             </View>
             <View style={styles.infoItem}>
-              <Icon name="wifi-off" size={20} color={COLORS.secondary} />
+              <Icon name="wifi-off" size={20} color={COLORS.warning} />
               <Text style={styles.infoText}>
                 Works without internet or cell service.
               </Text>
@@ -391,13 +506,14 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   activeTitle: {
-    color: COLORS.primary,
+    color: COLORS.emergency,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   activeTime: {
     color: COLORS.textSecondary,
     fontSize: 14,
+    fontWeight: '400',
     marginTop: 2,
   },
   mainContent: {
@@ -408,17 +524,17 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.emergency,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: COLORS.primary,
+    shadowColor: COLORS.emergency,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 30,
-    elevation: 15,
+    shadowOpacity: 0.7,
+    shadowRadius: 40,
+    elevation: 20,
   },
   sosButtonActive: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.emergencyDark,
   },
   sosButtonOuter: {
     width: '100%',
@@ -431,10 +547,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sosButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginTop: 10,
+    letterSpacing: 0.5,
   },
   signalIndicator: {
     position: 'absolute',
@@ -448,21 +565,18 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 125,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    opacity: 0.3,
+    borderWidth: 3,
+    borderColor: COLORS.emergency,
   },
   signalWave2: {
     width: 300,
     height: 300,
     borderRadius: 150,
-    opacity: 0.2,
   },
   signalWave3: {
     width: 350,
     height: 350,
     borderRadius: 175,
-    opacity: 0.1,
   },
   statusSection: {
     flexDirection: 'row',
@@ -471,6 +585,8 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     marginVertical: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   statusItem: {
     alignItems: 'center',
@@ -478,10 +594,11 @@ const styles = StyleSheet.create({
   statusLabel: {
     color: COLORS.textSecondary,
     fontSize: 12,
+    fontWeight: '500',
     marginTop: 5,
   },
   statusValue: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 14,
     fontWeight: '600',
     marginTop: 2,
@@ -490,7 +607,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
@@ -501,22 +618,27 @@ const styles = StyleSheet.create({
   },
   emergencyType: {
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
+    padding: 14,
+    borderRadius: 12,
     backgroundColor: COLORS.surface,
-    minWidth: 80,
+    minWidth: 90,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   emergencyTypeSelected: {
     backgroundColor: COLORS.primary,
+    borderColor: COLORS.primaryLight,
   },
   emergencyTypeText: {
     color: COLORS.textSecondary,
-    fontSize: 11,
-    marginTop: 5,
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 6,
     textAlign: 'center',
   },
   emergencyTypeTextSelected: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
+    fontWeight: '600',
   },
   messageSection: {
     marginBottom: 20,
@@ -525,19 +647,22 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 15,
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 14,
     minHeight: 80,
     textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: COLORS.surfaceLight,
   },
   charCount: {
     color: COLORS.textMuted,
     fontSize: 12,
+    fontWeight: '400',
     textAlign: 'right',
     marginTop: 5,
   },
   infoSection: {
-    gap: 10,
+    gap: 12,
   },
   infoItem: {
     flexDirection: 'row',
@@ -547,6 +672,7 @@ const styles = StyleSheet.create({
   infoText: {
     color: COLORS.textSecondary,
     fontSize: 13,
+    fontWeight: '400',
     flex: 1,
   },
 });

@@ -54,12 +54,16 @@
     <string>FLARE needs Bluetooth to detect emergency SOS beacons</string>
     <key>NSBluetoothPeripheralUsageDescription</key>
     <string>FLARE needs Bluetooth to broadcast emergency SOS signals</string>
+    <key>NSCameraUsageDescription</key>
+    <string>FLARE needs camera access to show AR beacon finder overlay</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSMotionUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your device motion</string>
     <key>RCTNewArchEnabled</key>

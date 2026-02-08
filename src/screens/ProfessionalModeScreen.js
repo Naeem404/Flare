@@ -166,7 +166,7 @@ const ProfessionalModeScreen = ({ navigation }) => {
     <ScrollView contentContainerStyle={styles.dashboardContainer}>
       <View style={styles.dashboardHeader}>
         <View style={styles.verifiedBadge}>
-          <Icon name="shield-check" size={24} color={COLORS.secondary} />
+          <Icon name="shield-check" size={24} color={COLORS.info} />
           <Text style={styles.verifiedText}>Verified Rescuer</Text>
         </View>
         <Text style={styles.organizationText}>{organization || 'Emergency Services'}</Text>
@@ -234,7 +234,7 @@ const ProfessionalModeScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.featureCard}>
-          <View style={[styles.featureIcon, { backgroundColor: COLORS.secondary }]}>
+          <View style={[styles.featureIcon, { backgroundColor: COLORS.info }]}>
             <Icon name="map-marker-multiple" size={24} color={COLORS.text} />
           </View>
           <View style={styles.featureInfo}>
@@ -321,76 +321,88 @@ const styles = StyleSheet.create({
   },
   authHeader: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
   },
   authIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 22,
+    borderWidth: 3,
+    borderColor: COLORS.primary,
   },
   authTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   authSubtitle: {
     fontSize: 14,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 5,
+    marginTop: 6,
   },
   authForm: {
     backgroundColor: COLORS.surface,
     borderRadius: 16,
-    padding: 20,
+    padding: 22,
     marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputLabel: {
     fontSize: 14,
+    fontWeight: '600',
     color: COLORS.textSecondary,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   input: {
     backgroundColor: COLORS.backgroundLight,
     borderRadius: 10,
-    padding: 15,
+    padding: 16,
     fontSize: 16,
-    color: COLORS.text,
+    color: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
   },
   authButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.warning,
-    paddingVertical: 15,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 16,
     borderRadius: 12,
     gap: 10,
   },
   authButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
   authButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   authInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: COLORS.surface,
-    padding: 15,
+    padding: 16,
     borderRadius: 12,
-    gap: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.info,
+    gap: 12,
   },
   authInfoText: {
     flex: 1,
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     lineHeight: 20,
   },
@@ -400,6 +412,7 @@ const styles = StyleSheet.create({
   },
   demoNoteText: {
     fontSize: 12,
+    fontWeight: '400',
     color: COLORS.textMuted,
     fontStyle: 'italic',
   },
@@ -408,59 +421,65 @@ const styles = StyleSheet.create({
   },
   dashboardHeader: {
     alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 28,
   },
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 20,
     gap: 8,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   verifiedText: {
-    color: COLORS.secondary,
+    color: COLORS.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   organizationText: {
     fontSize: 18,
-    color: COLORS.text,
-    fontWeight: '600',
-    marginTop: 10,
+    color: COLORS.primary,
+    fontWeight: '700',
+    marginTop: 12,
+    letterSpacing: 0.3,
   },
   quickActions: {
-    marginBottom: 25,
+    marginBottom: 28,
   },
   primaryAction: {
     backgroundColor: COLORS.primary,
     borderRadius: 16,
-    padding: 25,
+    padding: 28,
     alignItems: 'center',
   },
   primaryActionText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 10,
+    fontWeight: '700',
+    marginTop: 12,
   },
   primaryActionSubtext: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 14,
-    opacity: 0.8,
-    marginTop: 5,
+    fontWeight: '400',
+    opacity: 0.9,
+    marginTop: 6,
   },
   settingsSection: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
-    padding: 15,
+    padding: 16,
     marginBottom: 25,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
+    fontWeight: '700',
+    color: COLORS.primary,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 15,

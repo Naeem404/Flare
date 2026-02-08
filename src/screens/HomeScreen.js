@@ -79,18 +79,18 @@ const HomeScreen = ({ navigation }) => {
         <Icon
           name={isBluetoothEnabled ? 'bluetooth' : 'bluetooth-off'}
           size={20}
-          color={isBluetoothEnabled ? COLORS.secondary : COLORS.danger}
+          color={isBluetoothEnabled ? COLORS.success : COLORS.emergency}
         />
-        <Text style={[styles.statusText, { color: isBluetoothEnabled ? COLORS.secondary : COLORS.danger }]}>
+        <Text style={[styles.statusText, { color: isBluetoothEnabled ? COLORS.success : COLORS.emergency }]}>
           {isBluetoothEnabled ? 'BT On' : 'BT Off'}
         </Text>
       </View>
       {isBeaconActive && (
         <View style={styles.statusItem}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <Icon name="broadcast" size={20} color={COLORS.primary} />
+            <Icon name="broadcast" size={20} color={COLORS.emergency} />
           </Animated.View>
-          <Text style={[styles.statusText, { color: COLORS.primary }]}>
+          <Text style={[styles.statusText, { color: COLORS.emergency }]}>
             SOS Active
           </Text>
         </View>
@@ -111,32 +111,37 @@ const HomeScreen = ({ navigation }) => {
       {renderStatusBar()}
 
       <View style={styles.header}>
-        <Text style={styles.logo}>🔥 FLARE</Text>
+        <Text style={styles.logo}>FLARE</Text>
         <Text style={styles.tagline}>Emergency Rescue Beacon</Text>
       </View>
 
       <View style={styles.mainContent}>
-        <TouchableOpacity
-          style={[styles.sosButton, isBeaconActive && styles.sosButtonActive]}
-          onPress={() => handleModeSelect(BEACON_MODES.PUBLIC, 'Victim')}
-          activeOpacity={0.8}
-        >
-          <Animated.View
-            style={[
-              styles.sosButtonInner,
-              isBeaconActive && { transform: [{ scale: pulseAnim }] },
-            ]}
+        <View style={styles.sosButtonContainer}>
+          <View style={styles.sosGlowRing1} />
+          <View style={styles.sosGlowRing2} />
+          <View style={styles.sosGlowRing3} />
+          <TouchableOpacity
+            style={[styles.sosButton, isBeaconActive && styles.sosButtonActive]}
+            onPress={() => handleModeSelect(BEACON_MODES.PUBLIC, 'Victim')}
+            activeOpacity={0.8}
           >
-            <Icon
-              name={isBeaconActive ? 'broadcast' : 'alert-circle'}
-              size={60}
-              color={COLORS.text}
-            />
-            <Text style={styles.sosButtonText}>
-              {isBeaconActive ? 'SOS ACTIVE' : 'SEND SOS'}
-            </Text>
-          </Animated.View>
-        </TouchableOpacity>
+            <Animated.View
+              style={[
+                styles.sosButtonInner,
+                isBeaconActive && { transform: [{ scale: pulseAnim }] },
+              ]}
+            >
+              <Icon
+                name={isBeaconActive ? 'broadcast' : 'alert-circle'}
+                size={60}
+                color={COLORS.textPrimary}
+              />
+              <Text style={styles.sosButtonText}>
+                {isBeaconActive ? 'SOS ACTIVE' : 'SEND SOS'}
+              </Text>
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.triggerHint}>
           {TRIGGER_METHODS.PUBLIC.method}
@@ -152,7 +157,7 @@ const HomeScreen = ({ navigation }) => {
             onPress={() => handleModeSelect(BEACON_MODES.PUBLIC, 'Rescuer')}
           >
             <View style={[styles.modeIcon, { backgroundColor: COLORS.info }]}>
-              <Icon name="account-search" size={32} color={COLORS.text} />
+              <Icon name="account-search" size={32} color={COLORS.textPrimary} />
             </View>
             <Text style={styles.modeButtonText}>Rescuer</Text>
             <Text style={styles.modeDescription}>Find victims</Text>
@@ -162,8 +167,8 @@ const HomeScreen = ({ navigation }) => {
             style={styles.modeButton}
             onPress={() => navigation.navigate('Professional')}
           >
-            <View style={[styles.modeIcon, { backgroundColor: COLORS.warning }]}>
-              <Icon name="shield-account" size={32} color={COLORS.text} />
+            <View style={[styles.modeIcon, { backgroundColor: COLORS.primary }]}>
+              <Icon name="shield-account" size={32} color={COLORS.textPrimary} />
             </View>
             <Text style={styles.modeButtonText}>Professional</Text>
             <Text style={styles.modeDescription}>Certified rescue</Text>
@@ -173,8 +178,8 @@ const HomeScreen = ({ navigation }) => {
             style={styles.modeButton}
             onPress={() => navigation.navigate('Group')}
           >
-            <View style={[styles.modeIcon, { backgroundColor: COLORS.secondary }]}>
-              <Icon name="account-group" size={32} color={COLORS.text} />
+            <View style={[styles.modeIcon, { backgroundColor: COLORS.success }]}>
+              <Icon name="account-group" size={32} color={COLORS.textPrimary} />
             </View>
             <Text style={styles.modeButtonText}>My Group</Text>
             <Text style={styles.modeDescription}>Family & friends</Text>
@@ -220,58 +225,94 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   logo: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontSize: 48,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(255, 184, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
   tagline: {
     fontSize: 16,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 5,
+    marginTop: 8,
+    letterSpacing: 0.5,
   },
   mainContent: {
     alignItems: 'center',
     paddingVertical: 30,
   },
+  sosButtonContainer: {
+    width: width * 0.5,
+    height: width * 0.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sosGlowRing1: {
+    position: 'absolute',
+    width: width * 0.55,
+    height: width * 0.55,
+    borderRadius: width * 0.275,
+    backgroundColor: COLORS.emergencyGlow,
+  },
+  sosGlowRing2: {
+    position: 'absolute',
+    width: width * 0.6,
+    height: width * 0.6,
+    borderRadius: width * 0.3,
+    backgroundColor: 'rgba(255, 59, 48, 0.15)',
+  },
+  sosGlowRing3: {
+    position: 'absolute',
+    width: width * 0.65,
+    height: width * 0.65,
+    borderRadius: width * 0.325,
+    backgroundColor: 'rgba(255, 59, 48, 0.08)',
+  },
   sosButton: {
     width: width * 0.5,
     height: width * 0.5,
     borderRadius: width * 0.25,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.emergency,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: COLORS.primary,
+    shadowColor: COLORS.emergency,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.6,
+    shadowRadius: 25,
+    elevation: 15,
   },
   sosButtonActive: {
-    backgroundColor: COLORS.primaryDark,
+    backgroundColor: COLORS.emergencyDark,
   },
   sosButtonInner: {
     alignItems: 'center',
   },
   sosButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginTop: 10,
+    letterSpacing: 1,
   },
   triggerHint: {
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
     fontSize: 12,
+    fontWeight: '400',
     marginTop: 15,
     textAlign: 'center',
   },
   modeSection: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -281,9 +322,11 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     alignItems: 'center',
-    padding: 15,
-    borderRadius: 15,
+    padding: 16,
+    borderRadius: 12,
     backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
     width: (width - 60) / 3,
   },
   modeIcon: {
@@ -292,17 +335,18 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   modeButtonText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 14,
     fontWeight: '600',
   },
   modeDescription: {
     color: COLORS.textSecondary,
     fontSize: 11,
-    marginTop: 3,
+    fontWeight: '400',
+    marginTop: 4,
   },
   footer: {
     padding: 20,
@@ -311,10 +355,12 @@ const styles = StyleSheet.create({
   footerText: {
     color: COLORS.textMuted,
     fontSize: 12,
+    fontWeight: '400',
   },
   footerNote: {
     color: COLORS.textMuted,
     fontSize: 11,
+    fontWeight: '400',
     marginTop: 5,
   },
 });

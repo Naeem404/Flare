@@ -265,7 +265,7 @@ const LiveMapScreen = ({ navigation, route }) => {
           <Icon
             name={guidance?.icon || 'compass'}
             size={24}
-            color={guidance?.confidence > 0.5 ? COLORS.secondary : COLORS.warning}
+            color={guidance?.confidence > 0.5 ? COLORS.info : COLORS.warning}
           />
           <Text style={styles.navGuidanceText} numberOfLines={3}>
             {guidance?.message || 'Start walking to track movement...'}
@@ -302,7 +302,7 @@ const LiveMapScreen = ({ navigation, route }) => {
         borderColor = COLORS.danger;
       } else if (cell.isBestPath || cell.status === 'clear') {
         backgroundColor = COLORS.heatMapClear;
-        borderColor = COLORS.secondary;
+        borderColor = COLORS.info;
       } else if (cell.status === 'unstable' || cell.status === 'weak') {
         backgroundColor = COLORS.heatMapUnstable;
       }
@@ -356,7 +356,7 @@ const LiveMapScreen = ({ navigation, route }) => {
           <Icon 
             name="compass" 
             size={20} 
-            color={sensorStatus.magnetometer ? COLORS.secondary : COLORS.danger} 
+            color={sensorStatus.magnetometer ? COLORS.info : COLORS.danger} 
           />
           <Text style={styles.statusText}>
             {getCompassDirection(compassHeading)} ({compassHeading}°)
@@ -457,32 +457,39 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    padding: 15,
+    padding: 16,
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 3,
+    marginTop: 5,
   },
   navInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 14,
     backgroundColor: COLORS.surface,
-    marginHorizontal: 10,
-    marginVertical: 5,
+    marginHorizontal: 12,
+    marginVertical: 8,
     borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   warningText: {
     color: COLORS.warning,
     fontSize: 14,
+    fontWeight: '500',
     textAlign: 'center',
     flex: 1,
   },
@@ -491,33 +498,37 @@ const styles = StyleSheet.create({
     minWidth: 70,
   },
   navDistanceValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     color: COLORS.primary,
   },
   navDistanceLabel: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   navGuidance: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   navGuidanceText: {
     flex: 1,
     fontSize: 13,
-    color: COLORS.text,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
     lineHeight: 18,
   },
   trackingStatus: {
     backgroundColor: COLORS.surface,
-    marginHorizontal: 10,
-    marginVertical: 5,
-    padding: 10,
+    marginHorizontal: 12,
+    marginVertical: 8,
+    padding: 12,
     borderRadius: 12,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.primary,
   },
   statusRow: {
     flexDirection: 'row',
@@ -526,24 +537,26 @@ const styles = StyleSheet.create({
   statusItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   statusText: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     fontSize: 14,
+    fontWeight: '500',
   },
   positionDisplay: {
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
   },
   positionText: {
     color: COLORS.textSecondary,
     fontSize: 12,
+    fontWeight: '400',
     fontFamily: 'monospace',
   },
   mapContainer: {
     flex: 1,
-    margin: 10,
+    margin: 12,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: COLORS.surface,
@@ -558,13 +571,16 @@ const styles = StyleSheet.create({
   },
   overlayMessage: {
     position: 'absolute',
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.9)',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   overlayText: {
-    color: COLORS.text,
+    color: COLORS.primary,
+    fontWeight: '600',
     marginTop: 10,
     fontSize: 14,
   },
@@ -572,15 +588,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 10,
-    paddingVertical: 8,
+    gap: 12,
+    paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: COLORS.surface,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   legendColor: {
     width: 14,
@@ -589,29 +605,30 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   controls: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
   },
   trackButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingHorizontal: 26,
     borderRadius: 25,
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     gap: 10,
   },
   trackButtonActive: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.success,
   },
   trackButtonText: {
-    color: COLORS.text,
-    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    fontWeight: '700',
     fontSize: 16,
   },
   resetButton: {
@@ -621,10 +638,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     backgroundColor: COLORS.surface,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
     gap: 8,
   },
   resetButtonText: {
-    color: COLORS.text,
+    color: COLORS.primary,
     fontWeight: '600',
   },
 });

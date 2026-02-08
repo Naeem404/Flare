@@ -268,7 +268,7 @@ const CombinedMapScreen = ({ navigation, route }) => {
           <Icon
             name={guidance?.icon || 'compass'}
             size={24}
-            color={guidance?.confidence > 0.5 ? COLORS.secondary : COLORS.warning}
+            color={guidance?.confidence > 0.5 ? COLORS.info : COLORS.warning}
           />
           <Text style={styles.navGuidanceText} numberOfLines={3}>
             {guidance?.message || 'Move to start navigation...'}
@@ -305,7 +305,7 @@ const CombinedMapScreen = ({ navigation, route }) => {
         borderColor = COLORS.danger;
       } else if (cell.isBestPath || cell.status === 'clear') {
         backgroundColor = COLORS.heatMapClear;
-        borderColor = COLORS.secondary;
+        borderColor = COLORS.info;
       } else if (cell.status === 'unstable' || cell.status === 'weak') {
         backgroundColor = COLORS.heatMapUnstable;
       }
@@ -380,7 +380,7 @@ const CombinedMapScreen = ({ navigation, route }) => {
     <View style={styles.liveControls}>
       <View style={styles.liveStatus}>
         <View style={styles.statusItem}>
-          <Icon name="compass" size={18} color={COLORS.secondary} />
+          <Icon name="compass" size={18} color={COLORS.info} />
           <Text style={styles.statusText}>{getCompassDirection(compassHeading)} ({compassHeading}°)</Text>
         </View>
         <View style={styles.statusItem}>
@@ -458,26 +458,32 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    padding: 12,
+    padding: 14,
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 12,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 4,
   },
   modeToggle: {
     flexDirection: 'row',
-    marginHorizontal: 10,
-    marginBottom: 5,
+    marginHorizontal: 12,
+    marginBottom: 8,
     backgroundColor: COLORS.surface,
     borderRadius: 12,
-    padding: 4,
+    padding: 6,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   modeButton: {
     flex: 1,
@@ -496,21 +502,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   modeButtonTextActive: {
-    color: COLORS.text,
+    color: COLORS.textPrimary,
   },
   navInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 10,
+    padding: 12,
     backgroundColor: COLORS.surface,
-    marginHorizontal: 10,
-    marginVertical: 5,
+    marginHorizontal: 12,
+    marginVertical: 8,
     borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   warningText: {
     color: COLORS.warning,
     fontSize: 14,
+    fontWeight: '500',
     textAlign: 'center',
     flex: 1,
   },
@@ -519,25 +528,27 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   navDistanceValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
     color: COLORS.primary,
   },
   navDistanceLabel: {
     fontSize: 10,
+    fontWeight: '500',
     color: COLORS.textSecondary,
   },
   navGuidance: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 10,
   },
   navGuidanceText: {
     flex: 1,
     fontSize: 12,
-    color: COLORS.text,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
     lineHeight: 16,
   },
   mapContainer: {
@@ -557,15 +568,18 @@ const styles = StyleSheet.create({
   },
   positionBadge: {
     position: 'absolute',
-    bottom: 8,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+    bottom: 10,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 10,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   positionText: {
-    color: COLORS.text,
+    color: COLORS.primary,
     fontSize: 11,
+    fontWeight: '500',
     fontFamily: 'monospace',
   },
   legend: {
@@ -647,7 +661,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.info,
     gap: 8,
   },
   trackButtonActive: {

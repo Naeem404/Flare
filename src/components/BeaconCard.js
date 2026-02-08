@@ -39,7 +39,7 @@ const BeaconCard = ({ beacon, isSelected, onPress, onNavigate }) => {
       <View style={styles.header}>
         <View style={styles.iconContainer}>
           <View style={[styles.statusDot, { backgroundColor: signalQuality.color }]} />
-          <Icon name="account-alert" size={28} color={COLORS.text} />
+          <Icon name="account-alert" size={28} color={COLORS.textPrimary} />
         </View>
 
         <View style={styles.headerInfo}>
@@ -53,7 +53,7 @@ const BeaconCard = ({ beacon, isSelected, onPress, onNavigate }) => {
 
         {beacon.batteryLevel <= 20 && (
           <View style={styles.priorityBadge}>
-            <Icon name="alert" size={14} color={COLORS.text} />
+            <Icon name="alert" size={14} color={COLORS.textPrimary} />
             <Text style={styles.priorityText}>Priority</Text>
           </View>
         )}
@@ -112,14 +112,14 @@ const BeaconCard = ({ beacon, isSelected, onPress, onNavigate }) => {
           style={styles.navigateButton}
           onPress={onNavigate}
         >
-          <Icon name="navigation" size={18} color={COLORS.text} />
+          <Icon name="navigation" size={18} color={COLORS.textPrimary} />
           <Text style={styles.navigateText}>Navigate</Text>
         </TouchableOpacity>
       </View>
 
       {isSelected && (
         <View style={styles.selectedIndicator}>
-          <Icon name="check-circle" size={20} color={COLORS.secondary} />
+          <Icon name="check-circle" size={20} color={COLORS.info} />
           <Text style={styles.selectedText}>Tracking</Text>
         </View>
       )}
@@ -138,17 +138,18 @@ const styles = StyleSheet.create({
   },
   containerSelected: {
     borderColor: COLORS.primary,
-    backgroundColor: COLORS.backgroundLight,
+    backgroundColor: COLORS.primaryLight,
+    opacity: 0.95,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 14,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: COLORS.surface,
   },
   headerInfo: {
@@ -170,27 +171,28 @@ const styles = StyleSheet.create({
   },
   deviceName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   deviceId: {
     fontSize: 12,
+    fontWeight: '400',
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 3,
   },
   priorityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.danger,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    backgroundColor: COLORS.emergency,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 12,
-    gap: 4,
+    gap: 5,
   },
   priorityText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   statsRow: {
     flexDirection: 'row',
@@ -199,6 +201,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.primary,
   },
   stat: {
     alignItems: 'center',
@@ -206,27 +210,29 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginTop: 4,
+    fontWeight: '700',
+    color: COLORS.primary,
+    marginTop: 6,
   },
   statLabel: {
     fontSize: 11,
+    fontWeight: '500',
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 3,
   },
   messageContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: COLORS.backgroundLight,
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
     marginBottom: 12,
-    gap: 8,
+    gap: 10,
   },
   messageText: {
     flex: 1,
     fontSize: 13,
+    fontWeight: '400',
     color: COLORS.textSecondary,
     lineHeight: 18,
   },
@@ -234,17 +240,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 193, 7, 0.2)',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 12,
     marginBottom: 12,
-    gap: 5,
+    gap: 6,
   },
   emergencyText: {
     fontSize: 12,
     color: COLORS.warning,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
@@ -253,34 +259,35 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 12,
+    fontWeight: '400',
     color: COLORS.textMuted,
   },
   navigateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.info,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 20,
     gap: 6,
   },
   navigateText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   selectedIndicator: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   selectedText: {
     fontSize: 12,
-    color: COLORS.secondary,
-    fontWeight: '600',
+    color: COLORS.success,
+    fontWeight: '700',
   },
 });
 

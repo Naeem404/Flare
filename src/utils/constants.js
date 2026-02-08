@@ -4,33 +4,50 @@
  */
 
 export const COLORS = {
-  primary: '#FF4444',
-  primaryDark: '#CC0000',
-  secondary: '#4CAF50',
-  warning: '#FFC107',
-  danger: '#F44336',
-  info: '#2196F3',
-  
-  background: '#1A1A2E',
-  backgroundLight: '#16213E',
-  surface: '#0F3460',
-  
+  // Backgrounds
+  background: '#0A0A0F',
+  backgroundLight: '#111118',
+  surface: '#1A1A24',
+  surfaceLight: '#242430',
+
+  // Primary (Gold/Amber)
+  primary: '#FFB800',
+  primaryDark: '#E5A600',
+  primaryLight: '#FFD54F',
+
+  // Emergency (Red - ONLY for SOS, danger, alerts)
+  emergency: '#FF3B30',
+  emergencyDark: '#CC2D26',
+  emergencyGlow: 'rgba(255, 59, 48, 0.3)',
+
+  // Status Colors
+  success: '#4CD964',
+  warning: '#FF9500',
+  danger: '#FF3B30',
+  info: '#5AC8FA',
+
+  // Text
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8B8C0',
+  textMuted: '#6B6B78',
+  textGold: '#FFB800',
+
+  // Legacy support (maps to new colors)
   text: '#FFFFFF',
-  textSecondary: '#B0B0B0',
-  textMuted: '#666666',
-  
   border: '#333333',
-  
-  signalExcellent: '#4CAF50',
+
+  // Signal colors (green→yellow→red spectrum)
+  signalExcellent: '#4CD964',
   signalGood: '#8BC34A',
-  signalFair: '#FFC107',
-  signalWeak: '#FF9800',
-  signalVeryWeak: '#F44336',
-  
-  heatMapClear: '#4CAF50',
-  heatMapUnstable: '#FFC107',
-  heatMapObstacle: '#F44336',
-  heatMapUnknown: '#666666',
+  signalFair: '#FF9500',
+  signalWeak: '#FF9500',
+  signalVeryWeak: '#FF3B30',
+
+  // Heat map
+  heatMapClear: '#4CD964',
+  heatMapUnstable: '#FF9500',
+  heatMapObstacle: '#FF3B30',
+  heatMapUnknown: '#6B6B78',
 };
 
 export const BEACON_MODES = {
